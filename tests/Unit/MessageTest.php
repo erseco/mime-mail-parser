@@ -3,6 +3,7 @@
 namespace Erseco\MimeMailParser\Tests\Unit;
 
 use Erseco\MimeMailParser\Message;
+use Erseco\MimeMailParser\Tests\TestCase;
 
 it('can parse a simple mail message', function () {
     $messageString = <<<EOF

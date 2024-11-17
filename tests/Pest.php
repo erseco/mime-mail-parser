@@ -1,3 +1,3 @@
 <?php
 
-// uses(Tests\TestCase::class)->in('Feature');
+uses(\Erseco\MimeMailParser\Tests\TestCase::class)->in('Unit');
