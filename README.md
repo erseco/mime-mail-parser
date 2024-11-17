@@ -47,7 +47,7 @@ $parser = new MimeMailParser($rawEmail);
 
 $parser->getHeaders();                 // get all headers
 $parser->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
-$parser->getFrom();                    // 'Arunas <arunas@example.com>'
+$parser->getFrom();                    // 'Service <service@example.com>'
 $parser->getTo();                      // 'John Doe <johndoe@example.com>'
 $parser->getSubject();                 // 'Subject line'
 $parser->getDate();                    // DateTime object when the email was sent
