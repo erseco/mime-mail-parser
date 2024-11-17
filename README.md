@@ -39,34 +39,33 @@ composer require opcodesio/mail-parser
 ### Usage
 
 ```php
-use Opcodes\MailParser\Message;
+use Erseco\MimeMailParser\Mime_Mail_Parser;
 
 // Parse a message from a string
-$message = Message::fromString('...');
-// Or from a file location (accessible with file_get_contents())
-$message = Message::fromFile('/path/to/email.eml');
+$rawEmail = file_get_contents('/path/to/email.eml');
+$parser = new Mime_Mail_Parser($rawEmail);
 
-$message->getHeaders();                 // get all headers
-$message->getHeader('Content-Type');    // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
-$message->getFrom();                    // 'Arunas <arunas@example.com>
-$message->getTo();                      // 'John Doe <johndoe@example.com>
-$message->getSubject();                 // 'Subject line'
-$message->getDate();                    // DateTime object when the email was sent
-$message->getSize();                    // Email size in bytes
+$parser->getHeaders();                 // get all headers
+$parser->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
+$parser->getFrom();                    // 'Arunas <arunas@example.com>'
+$parser->getTo();                      // 'John Doe <johndoe@example.com>'
+$parser->getSubject();                 // 'Subject line'
+$parser->getDate();                    // DateTime object when the email was sent
 
-$message->getParts();       // Returns an array of \Opcodes\MailParser\MessagePart, which can be html parts, text parts, attachments, etc.
-$message->getHtmlPart();    // Returns the \Opcodes\MailParser\MessagePart containing the HTML body
-$message->getTextPart();    // Returns the \Opcodes\MailParser\MessagePart containing the Text body
-$message->getAttachments(); // Returns an array of \Opcodes\MailParser\MessagePart that represent attachments
+$parser->getParts();       // Returns an array of parts, which can be html parts, text parts, attachments, etc.
+$parser->getHtmlPart();    // Returns the HTML content
+$parser->getTextPart();    // Returns the Text content
+$parser->getAttachments(); // Returns an array of attachments
 
-$messagePart = $message->getParts()[0];
+$parts = $parser->getParts();
+$firstPart = $parts[0];
 
-$messagePart->getHeaders();                 // array of all headers for this message part
-$messagePart->getHeader('Content-Type');    // value of a particular header
-$messagePart->getContentType();             // 'text/html; charset="utf-8"'
-$messagePart->getContent();                 // '<html><body>....'
-$messagePart->getSize();                    // 312
-$messagePart->getFilename();                // name of the file, in case this is an attachment part
+$firstPart->headers;                 // array of all headers for this message part
+$firstPart->contentType;             // 'text/html; charset="utf-8"'
+$firstPart->content;                 // '<html><body>....'
+$firstPart->isHtml;                  // true if it's an HTML part
+$firstPart->isAttachment;            // true if it's an attachment
+$firstPart->filename;                // name of the file, in case this is an attachment part
 ```
 
 ## Contributing
