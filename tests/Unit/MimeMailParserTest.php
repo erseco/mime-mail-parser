@@ -1,6 +1,6 @@
 <?php
 
-namespace Erseco\MimeMailParser\Tests;
+namespace Erseco\MimeMailParser\Tests\Unit;
 
 use Erseco\MimeMailParser\Tests\TestCase;
 use Erseco\MimeMailParser\Mime_Mail_Parser;
