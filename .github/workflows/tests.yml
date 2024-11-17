@@ -32,5 +32,8 @@ jobs:
       - name: Install dependencies
         run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
+      - name: Execute Linter
+        run: composer lint
+
       - name: Execute Pest tests
-        run: ./vendor/bin/pest
+        run: composer test
