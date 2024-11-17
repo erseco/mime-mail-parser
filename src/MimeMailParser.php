@@ -291,4 +291,101 @@ class Mime_Mail_Parser {
         return $this->parsed['attachments'];
     }
 
+
+	/**
+     * Retrieves the 'From' header from the parsed headers.
+     *
+     * @return string|null The 'From' header value or null if not found.
+     */
+    public function getFrom() {
+        return $this->parsed['headers']['From'] ?? null;
+    }
+
+    /**
+     * Retrieves the 'To' header from the parsed headers.
+     *
+     * @return string|null The 'To' header value or null if not found.
+     */
+    public function getTo() {
+        return $this->parsed['headers']['To'] ?? null;
+    }
+
+    /**
+     * Retrieves the 'Subject' header from the parsed headers.
+     *
+     * @return string|null The 'Subject' header value or null if not found.
+     */
+    public function getSubject() {
+        return $this->parsed['headers']['Subject'] ?? null;
+    }
+
+    /**
+     * Retrieves the 'Message-ID' header from the parsed headers.
+     *
+     * @return string|null The 'Message-ID' header value or null if not found.
+     */
+    public function getId() {
+        return $this->parsed['headers']['Message-ID'] ?? null;
+    }
+
+    /**
+     * Retrieves the date as a DateTime object, if available.
+     *
+     * @return \DateTime|null The date object or null if not found.
+     */
+    public function getDate() {
+        $dateString = $this->parsed['headers']['Date'] ?? null;
+        if ($dateString) {
+            return new \DateTime($dateString);
+        }
+        return null;
+    }
+
+    /**
+     * Retrieves the 'Content-Type' header from the parsed headers.
+     *
+     * @return string|null The 'Content-Type' header value or null if not found.
+     */
+    public function getContentType() {
+        return $this->parsed['headers']['Content-Type'] ?? null;
+    }
+
+    /**
+     * Retrieves all parts (HTML, text, attachments) from the email.
+     *
+     * @return array An array of parts.
+     */
+    public function getParts() {
+        $parts = [];
+        if (!empty($this->parsed['text'])) {
+            $parts[] = (object) [
+                'contentType' => 'text/plain',
+                'content' => $this->parsed['text'],
+                'headers' => $this->parsed['headers'],
+                'isHtml' => false,
+                'isAttachment' => false
+            ];
+        }
+        if (!empty($this->parsed['html'])) {
+            $parts[] = (object) [
+                'contentType' => 'text/html',
+                'content' => $this->parsed['html'],
+                'headers' => $this->parsed['headers'],
+                'isHtml' => true,
+                'isAttachment' => false
+            ];
+        }
+        foreach ($this->parsed['attachments'] as $attachment) {
+            $parts[] = (object) [
+                'contentType' => $attachment['mimetype'],
+                'content' => $attachment['content'],
+                'filename' => $attachment['filename'],
+                'headers' => $this->parsed['headers'],
+                'isAttachment' => true
+            ];
+        }
+        return $parts;
+    }
+
+
 }
