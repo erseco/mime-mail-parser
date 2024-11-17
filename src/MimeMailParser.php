@@ -1,11 +1,11 @@
 <?php
 
-namespace Erseco\MimeMailParser;
+namespace Erseco;
 
 /**
  * Class to parse emails and extract content and attachments.
  */
-class Mime_Mail_Parser {
+class MimeMailParser {
 
     private $rawEmail;
     private $parsed = [

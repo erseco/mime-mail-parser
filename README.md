@@ -11,14 +11,14 @@
 </p>
 
 <p align="center">
-<a href="https://packagist.org/packages/opcodesio/mail-parser"><img src="https://img.shields.io/packagist/v/opcodesio/mail-parser.svg?style=flat-square" alt="Packagist"></a>
-<a href="https://packagist.org/packages/opcodesio/mail-parser"><img src="https://img.shields.io/packagist/dm/opcodesio/mail-parser.svg?style=flat-square" alt="Packagist"></a>
-<a href="https://packagist.org/packages/opcodesio/mail-parser"><img src="https://img.shields.io/packagist/php-v/opcodesio/mail-parser.svg?style=flat-square" alt="PHP from Packagist"></a>
+<a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/v/erseco/mime-mail-parser.svg?style=flat-square" alt="Packagist"></a>
+<a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/dm/erseco/mime-mail-parser.svg?style=flat-square" alt="Packagist"></a>
+<a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/php-v/erseco/mime-mail-parser.svg?style=flat-square" alt="PHP from Packagist"></a>
 </p>
 
 ## Features
 
-[OPcodes's](https://www.opcodes.io/) **Mail Parser** has a very simple API to parse emails and their MIME contents. Unlike many other parsers out there, this package does not require the [mailparse](https://www.php.net/manual/en/book.mailparse.php) PHP extension.
+**Mime Mail Parser** has a very simple API to parse emails and their MIME contents. Unlike many other parsers out there, this package does not require the [mailparse](https://www.php.net/manual/en/book.mailparse.php) PHP extension.
 
 Has not been fully tested against RFC 5322.
 
@@ -33,17 +33,17 @@ Has not been fully tested against RFC 5322.
 To install the package via composer, Run:
 
 ```bash
-composer require opcodesio/mail-parser
+composer require erseco/mime-mail-parser
 ```
 
 ### Usage
 
 ```php
-use Erseco\MimeMailParser\Mime_Mail_Parser;
+use Erseco\MimeMailParser;
 
 // Parse a message from a string
 $rawEmail = file_get_contents('/path/to/email.eml');
-$parser = new Mime_Mail_Parser($rawEmail);
+$parser = new MimeMailParser($rawEmail);
 
 $parser->getHeaders();                 // get all headers
 $parser->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
@@ -68,18 +68,9 @@ $firstPart->isAttachment;            // true if it's an attachment
 $firstPart->filename;                // name of the file, in case this is an attachment part
 ```
 
-## Contributing
-
-A guide for contributing is in progress...
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
 ## Credits
 
-- [Arunas Skirius](https://github.com/arukompas)
-- [All Contributors](../../contributors)
+- [opcodesio/mail-parser](https://github.com/opcodesio/mail-parser)
 
 ## License
 

@@ -5,7 +5,7 @@ namespace Erseco\MimeMailParser\Tests\Unit;
 require_once __DIR__ . '/../../src/MimeMailParser.php';
 
 
-use Erseco\MimeMailParser\Mime_Mail_Parser;
+use Erseco\MimeMailParser;
 
 
 
@@ -23,7 +23,7 @@ Content-Transfer-Encoding: quoted-printable
 Email content goes here.
 EOF;
 
-    $message = new Mime_Mail_Parser($messageString);
+    $message = new MimeMailParser($messageString);
 
     expect($message->getFrom())->toBe('Sender <no-reply@example.com>')
         ->and($message->getTo())->toBe('Receiver <receiver@example.com>')
@@ -48,7 +48,7 @@ content-transfer-encoding: quoted-printable
 Email content goes here.
 EOF;
 
-    $message = new Mime_Mail_Parser($messageString);
+    $message = new MimeMailParser($messageString);
 
     expect($message->getHeaders())->toBe([
         'from' => 'Sender <no-reply@example.com>',
@@ -92,7 +92,7 @@ Content-Type: text/html; charset="utf-8"
 ------=_Part_1_1234567890--
 EOF;
 
-    $message = new Mime_Mail_Parser($messageString);
+    $message = new MimeMailParser($messageString);
 
     expect($message->getHeaders())->toBe([
         'From' => 'sender@example.com',
@@ -147,7 +147,7 @@ Content-Type: text/html; charset="utf-8"
 --boundary1--
 EOF;
 
-    $message = new Mime_Mail_Parser($messageString);
+    $message = new MimeMailParser($messageString);
 
     expect($message->getParts())->toHaveCount(2)
         ->and($message->getParts()[0]->contentType)->toBe('text/plain')
