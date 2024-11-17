@@ -5,7 +5,8 @@ namespace Erseco;
 /**
  * Class to parse emails and extract content and attachments.
  */
-class MimeMailParser {
+class MimeMailParser
+{
 
     private $rawEmail;
     private $parsed = [
@@ -20,7 +21,8 @@ class MimeMailParser {
      *
      * @param string $rawEmail The raw email content as a string.
      */
-    public function __construct($rawEmail) {
+    public function __construct($rawEmail)
+    {
         $this->rawEmail = $rawEmail;
         $this->parseEmail();
     }
@@ -28,7 +30,8 @@ class MimeMailParser {
     /**
      * Parses the raw email content.
      */
-    private function parseEmail() {
+    private function parseEmail()
+    {
         // Split headers and body
         list($headerSection, $bodySection) = $this->splitHeadersAndBody($this->rawEmail);
 
@@ -61,11 +64,12 @@ class MimeMailParser {
     /**
      * Parses multipart content recursively.
      *
-     * @param string $body The body content.
-     * @param string $boundary The boundary string.
+     * @param string $body              The body content.
+     * @param string $boundary          The boundary string.
      * @param string $parentContentType The content type of the parent part.
      */
-    private function parseMultipart($body, $boundary, $parentContentType) {
+    private function parseMultipart($body, $boundary, $parentContentType)
+    {
         // Split body into parts
         $parts = $this->splitBodyByBoundary($body, $boundary);
         foreach ($parts as $part) {
@@ -118,10 +122,11 @@ class MimeMailParser {
     /**
      * Splits raw email into headers and body.
      *
-     * @param string $rawEmail The raw email content.
+     * @param  string $rawEmail The raw email content.
      * @return array An array containing headers and body.
      */
-    private function splitHeadersAndBody($rawEmail) {
+    private function splitHeadersAndBody($rawEmail)
+    {
         $parts = preg_split("/\r?\n\r?\n/", $rawEmail, 2);
         return [
             $parts[0] ?? '',
@@ -132,10 +137,11 @@ class MimeMailParser {
     /**
      * Parses email headers into an associative array.
      *
-     * @param string $headerText The header section of the email.
+     * @param  string $headerText The header section of the email.
      * @return array Associative array of headers.
      */
-    private function parseHeaders($headerText) {
+    private function parseHeaders($headerText)
+    {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
         $currentHeader = '';
@@ -159,10 +165,11 @@ class MimeMailParser {
     /**
      * Extracts the boundary string from the Content-Type header.
      *
-     * @param string $contentType The Content-Type header value.
+     * @param  string $contentType The Content-Type header value.
      * @return string|null The boundary string or null if not found.
      */
-    private function getBoundary($contentType) {
+    private function getBoundary($contentType)
+    {
         if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
             return $matches[1];
         }
@@ -172,47 +179,52 @@ class MimeMailParser {
     /**
      * Splits the body into parts using the boundary.
      *
-     * @param string $body The body of the email.
-     * @param string $boundary The boundary string.
+     * @param  string $body     The body of the email.
+     * @param  string $boundary The boundary string.
      * @return array An array of body parts.
      */
-    private function splitBodyByBoundary($body, $boundary) {
+    private function splitBodyByBoundary($body, $boundary)
+    {
         $boundary = preg_quote($boundary, '/');
         $pattern = "/--$boundary(?:--)?\r?\n/";
         $parts = preg_split($pattern, $body);
-        return array_filter($parts, function($part) {
-            return trim($part) !== '';
-        });
+        return array_filter(
+            $parts, function ($part) {
+                return trim($part) !== '';
+            }
+        );
     }
 
     /**
      * Decodes content based on the encoding specified.
      *
-     * @param string $content The content to decode.
-     * @param string $encoding The encoding type.
+     * @param  string $content  The content to decode.
+     * @param  string $encoding The encoding type.
      * @return string The decoded content.
      */
-    private function decodeContent($content, $encoding) {
+    private function decodeContent($content, $encoding)
+    {
         $encoding = strtolower($encoding);
         switch ($encoding) {
-            case 'base64':
-                return base64_decode($content);
-            case 'quoted-printable':
-                return quoted_printable_decode($content);
-            case '7bit':
-            case '8bit':
-            default:
-                return $content;
+        case 'base64':
+            return base64_decode($content);
+        case 'quoted-printable':
+            return quoted_printable_decode($content);
+        case '7bit':
+        case '8bit':
+        default:
+            return $content;
         }
     }
 
     /**
      * Extracts the filename from the headers.
      *
-     * @param array $headers The headers array.
+     * @param  array $headers The headers array.
      * @return string|null The filename or null if not found.
      */
-    private function getFilename($headers) {
+    private function getFilename($headers)
+    {
         if (isset($headers['Content-Disposition'])) {
             if (preg_match('/filename="([^"]+)"/i', $headers['Content-Disposition'], $matches)) {
                 return $matches[1];
@@ -229,10 +241,11 @@ class MimeMailParser {
     /**
      * Generates a filename based on the content type.
      *
-     * @param string $contentType The content type.
+     * @param  string $contentType The content type.
      * @return string A generated filename.
      */
-    private function generateFilename($contentType) {
+    private function generateFilename($contentType)
+    {
         $extension = explode('/', $contentType)[1] ?? 'dat';
         return 'attachment_' . uniqid() . '.' . $extension;
     }
@@ -242,7 +255,8 @@ class MimeMailParser {
      *
      * @return array The email headers.
      */
-    public function getHeaders() {
+    public function getHeaders()
+    {
         return $this->parsed['headers'];
     }
 
@@ -251,7 +265,8 @@ class MimeMailParser {
      *
      * @return string|null The HTML content or null if not available.
      */
-    public function getHtmlPart() {
+    public function getHtmlPart()
+    {
         return !empty($this->parsed['html']) ? $this->parsed['html'] : null;
     }
 
@@ -260,11 +275,13 @@ class MimeMailParser {
      *
      * @return string|null The text content or null if not available.
      */
-    public function getTextPart() {
+    public function getTextPart()
+    {
         return !empty($this->parsed['text']) ? $this->parsed['text'] : null;
     }
 
-    public function getBody() {
+    public function getBody()
+    {
         // Try to get HTML content first
         $html_content = $this->getHtmlPart();
         if (!empty($html_content)) {
@@ -287,17 +304,19 @@ class MimeMailParser {
      *
      * @return array An array of attachments.
      */
-    public function getAttachments() {
+    public function getAttachments()
+    {
         return $this->parsed['attachments'];
     }
 
 
-	/**
+    /**
      * Retrieves the 'From' header from the parsed headers.
      *
      * @return string|null The 'From' header value or null if not found.
      */
-    public function getFrom() {
+    public function getFrom()
+    {
         return $this->parsed['headers']['From'] ?? null;
     }
 
@@ -306,7 +325,8 @@ class MimeMailParser {
      *
      * @return string|null The 'To' header value or null if not found.
      */
-    public function getTo() {
+    public function getTo()
+    {
         return $this->parsed['headers']['To'] ?? null;
     }
 
@@ -315,7 +335,8 @@ class MimeMailParser {
      *
      * @return string|null The 'Subject' header value or null if not found.
      */
-    public function getSubject() {
+    public function getSubject()
+    {
         return $this->parsed['headers']['Subject'] ?? null;
     }
 
@@ -324,7 +345,8 @@ class MimeMailParser {
      *
      * @return string|null The 'Message-ID' header value or null if not found.
      */
-    public function getId() {
+    public function getId()
+    {
         return $this->parsed['headers']['Message-ID'] ?? null;
     }
 
@@ -333,7 +355,8 @@ class MimeMailParser {
      *
      * @return \DateTime|null The date object or null if not found.
      */
-    public function getDate() {
+    public function getDate()
+    {
         $dateString = $this->parsed['headers']['Date'] ?? null;
         if ($dateString) {
             return new \DateTime($dateString);
@@ -346,7 +369,8 @@ class MimeMailParser {
      *
      * @return string|null The 'Content-Type' header value or null if not found.
      */
-    public function getContentType() {
+    public function getContentType()
+    {
         return $this->parsed['headers']['Content-Type'] ?? null;
     }
 
@@ -355,7 +379,8 @@ class MimeMailParser {
      *
      * @return array An array of parts.
      */
-    public function getParts() {
+    public function getParts()
+    {
         $parts = [];
         if (!empty($this->parsed['text'])) {
             $parts[] = (object) [

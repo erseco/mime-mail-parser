@@ -5,11 +5,3 @@
  * you can change this configuration by importing this file.
  *
  */
-
-$config = include 'vendor/zbateson/mb-wrapper/PhpCsFixer.php';
-
-return $config->setFinder(PhpCsFixer\Finder::create()
-    ->exclude('vendor')
-    ->in(__DIR__.'/src')
-    ->in(__DIR__.'/tests')
-    );
