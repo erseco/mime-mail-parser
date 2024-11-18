@@ -62,10 +62,10 @@ class MimeMailParser
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $this->_parsed['headers'] = $this->_parseHeaders($headerSection);
+        $this->_parsed['headers'] = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
 
         // Determine content type
-        $contentType = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
+        $contentType = $this->_parsed['headers']['content-type'] ?? 'text/plain';
 
         // Check for multipart content
         if (strpos($contentType, 'multipart/') !== false) {
@@ -77,17 +77,12 @@ class MimeMailParser
             }
         } else {
             // Single part email
-            $encoding = $this->_parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
+            $encoding = $this->_parsed['headers']['content-transfer-encoding'] ?? '7bit';
             $decodedContent = $this->_decodeContent($bodySection, $encoding);
             if (strpos($contentType, 'text/html') !== false) {
                 $this->_parsed['html'] = $decodedContent;
             } else {
                 $this->_parsed['text'] = $decodedContent;
-            }
-            if (strpos($contentType, 'text/html') !== false) {
-                $this->_parsed['html'] .= $decodedContent;
-            } else {
-                $this->_parsed['text'] .= $decodedContent;
             }
         }
     }
@@ -114,18 +109,18 @@ class MimeMailParser
         $parts = $this->_splitBodyByBoundary($body, $boundary);
         foreach ($parts as $part) {
             // Split headers and content
-            list($headerSection, $bodyContent) = $this->splitHeadersAndBody($part);
-            $headers = $this->parseHeaders($headerSection);
+            list($headerSection, $bodyContent) = $this->_splitHeadersAndBody($part);
+            $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
 
             // Get content type and encoding
-            $contentType = $headers['Content-Type'] ?? 'text/plain';
-            $encoding = $headers['Content-Transfer-Encoding'] ?? '7bit';
+            $contentType = $headers['content-type'] ?? 'text/plain';
+            $encoding = $headers['content-transfer-encoding'] ?? '7bit';
 
             if (strpos($contentType, 'multipart/') !== false) {
                 // Nested multipart
-                $subBoundary = $this->getBoundary($contentType);
+                $subBoundary = $this->_getBoundary($contentType);
                 if ($subBoundary) {
-                    $this->parseMultipart($bodyContent, $subBoundary, $contentType);
+                    $this->_parseMultipart($bodyContent, $subBoundary, $contentType);
                 }
             } else {
                 // Decode content
@@ -133,10 +128,10 @@ class MimeMailParser
 
                 // Handle content based on type
                 if (strpos($contentType, 'text/html') !== false) {
-                    $this->parsed['html'] .= $decodedContent;
+                    $this->_parsed['html'] = $decodedContent;
                 } elseif (strpos($contentType, 'text/plain') !== false) {
-                    $this->parsed['text'] .= $decodedContent;
-                } elseif (isset($headers['Content-Disposition']) && strpos($headers['Content-Disposition'], 'attachment') !== false) {
+                    $this->_parsed['text'] = $decodedContent;
+                } elseif (isset($headers['content-disposition']) && strpos($headers['content-disposition'], 'attachment') !== false) {
                     // Handle attachment
                     $filename = $this->_getFilename($headers);
                     if ($filename) {
