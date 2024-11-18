@@ -80,9 +80,14 @@ class MimeMailParser
             $encoding = $this->_parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
             $decodedContent = $this->_decodeContent($bodySection, $encoding);
             if (strpos($contentType, 'text/html') !== false) {
-                $this->parsed['html'] .= $decodedContent;
+                $this->_parsed['html'] = $decodedContent;
             } else {
-                $this->parsed['text'] .= $decodedContent;
+                $this->_parsed['text'] = $decodedContent;
+            }
+            if (strpos($contentType, 'text/html') !== false) {
+                $this->_parsed['html'] .= $decodedContent;
+            } else {
+                $this->_parsed['text'] .= $decodedContent;
             }
         }
     }
@@ -429,25 +434,25 @@ class MimeMailParser
     public function getParts(): array
     {
         $parts = [];
-        if (!empty($this->parsed['text'])) {
+        if (!empty($this->_parsed['text'])) {
             $parts[] = (object) [
                 'contentType' => 'text/plain',
-                'content' => $this->parsed['text'],
-                'headers' => $this->parsed['headers'],
+                'content' => $this->_parsed['text'],
+                'headers' => $this->_parsed['headers'],
                 'isHtml' => false,
                 'isAttachment' => false
             ];
         }
-        if (!empty($this->parsed['html'])) {
+        if (!empty($this->_parsed['html'])) {
             $parts[] = (object) [
                 'contentType' => 'text/html',
-                'content' => $this->parsed['html'],
-                'headers' => $this->parsed['headers'],
+                'content' => $this->_parsed['html'],
+                'headers' => $this->_parsed['headers'],
                 'isHtml' => true,
                 'isAttachment' => false
             ];
         }
-        foreach ($this->parsed['attachments'] as $attachment) {
+        foreach ($this->_parsed['attachments'] as $attachment) {
             $parts[] = (object) [
                 'contentType' => $attachment['mimetype'],
                 'content' => $attachment['content'],
