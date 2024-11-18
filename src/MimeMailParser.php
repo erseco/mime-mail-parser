@@ -85,9 +85,9 @@ class MimeMailParser
     /**
      * Parses multipart content recursively.
      *
-     * @param string $body               The body content.
-     * @param string $boundary           The boundary string.
-     * @param string $parentContentType  The content type of the parent part.
+     * @param string $body              The body content.
+     * @param string $boundary          The boundary string.
+     * @param string $parentContentType The content type of the parent part.
      *
      * @return void
      */
@@ -145,7 +145,7 @@ class MimeMailParser
     /**
      * Splits raw email into headers and body.
      *
-     * @param string $rawEmail  The raw email content.
+     * @param string $rawEmail The raw email content.
      *
      * @return array  An array containing headers and body.
      */
@@ -161,7 +161,7 @@ class MimeMailParser
     /**
      * Parses email headers into an associative array.
      *
-     * @param string $headerText  The header section of the email.
+     * @param string $headerText The header section of the email.
      *
      * @return array  Associative array of headers.
      */
@@ -190,7 +190,7 @@ class MimeMailParser
     /**
      * Extracts the boundary string from the Content-Type header.
      *
-     * @param string $contentType  The Content-Type header value.
+     * @param string $contentType The Content-Type header value.
      *
      * @return string|null  The boundary string or null if not found.
      */
@@ -205,8 +205,8 @@ class MimeMailParser
     /**
      * Splits the body into parts using the boundary.
      *
-     * @param string $body      The body of the email.
-     * @param string $boundary  The boundary string.
+     * @param string $body     The body of the email.
+     * @param string $boundary The boundary string.
      *
      * @return array  An array of body parts.
      */
@@ -225,8 +225,8 @@ class MimeMailParser
     /**
      * Decodes content based on the encoding specified.
      *
-     * @param string $content   The content to decode.
-     * @param string $encoding  The encoding type.
+     * @param string $content  The content to decode.
+     * @param string $encoding The encoding type.
      *
      * @return string  The decoded content.
      */
@@ -248,7 +248,7 @@ class MimeMailParser
     /**
      * Extracts the filename from the headers.
      *
-     * @param array $headers  The headers array.
+     * @param array $headers The headers array.
      *
      * @return string|null  The filename or null if not found.
      */
@@ -270,7 +270,7 @@ class MimeMailParser
     /**
      * Generates a filename based on the content type.
      *
-     * @param string $contentType  The content type.
+     * @param string $contentType The content type.
      *
      * @return string  A generated filename.
      */
