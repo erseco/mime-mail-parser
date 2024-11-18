@@ -3,7 +3,16 @@
 namespace Erseco;
 
 /**
- * Class to parse emails and extract content and attachments.
+ * MimeMailParser class for parsing email messages
+ *
+ * This class provides functionality to parse email messages and extract
+ * their content including headers, body parts and attachments.
+ *
+ * @category Library
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
  */
 class MimeMailParser
 {

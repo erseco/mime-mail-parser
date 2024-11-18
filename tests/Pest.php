@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pest PHP configuration file
+ *
+ * @category Tests
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
+ */
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
