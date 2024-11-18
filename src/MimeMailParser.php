@@ -61,7 +61,7 @@ class MimeMailParser
             $boundary = $this->_getBoundary($contentType);
             if ($boundary) {
                 // Parse multipart content
-                $this->parseMultipart($bodySection, $boundary, $contentType);
+                $this->_parseMultipart($bodySection, $boundary, $contentType);
             }
         } else {
             // Single part email
