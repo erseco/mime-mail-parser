@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * MimeMailParser.php
+ *
+ * PHP Version 8.1
+ *
+ * @category Library
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
+ */
+
 namespace Erseco;
 
 /**
