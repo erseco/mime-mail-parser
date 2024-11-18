@@ -58,7 +58,7 @@ class MimeMailParser
         // Check for multipart content
         if (strpos($contentType, 'multipart/') !== false) {
             // Extract boundary
-            $boundary = $this->getBoundary($contentType);
+            $boundary = $this->_getBoundary($contentType);
             if ($boundary) {
                 // Parse multipart content
                 $this->parseMultipart($bodySection, $boundary, $contentType);
@@ -85,15 +85,16 @@ class MimeMailParser
     /**
      * Parses multipart content recursively.
      *
-     * @param string $body              The body content.
-     * @param string $boundary          The boundary string.
-     * @param string $parentContentType The content type of the parent part.
+     * @param string $body               The body content.
+     * @param string $boundary           The boundary string.
+     * @param string $parentContentType  The content type of the parent part.
+     *
      * @return void
      */
     private function _parseMultipart($body, $boundary, $parentContentType)
     {
         // Split body into parts
-        $parts = $this->splitBodyByBoundary($body, $boundary);
+        $parts = $this->_splitBodyByBoundary($body, $boundary);
         foreach ($parts as $part) {
             // Split headers and content
             list($headerSection, $bodyContent) = $this->splitHeadersAndBody($part);
@@ -111,7 +112,7 @@ class MimeMailParser
                 }
             } else {
                 // Decode content
-                $decodedContent = $this->decodeContent($bodyContent, $encoding);
+                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
 
                 // Handle content based on type
                 if (strpos($contentType, 'text/html') !== false) {
@@ -120,7 +121,7 @@ class MimeMailParser
                     $this->parsed['text'] .= $decodedContent;
                 } elseif (isset($headers['Content-Disposition']) && strpos($headers['Content-Disposition'], 'attachment') !== false) {
                     // Handle attachment
-                    $filename = $this->getFilename($headers);
+                    $filename = $this->_getFilename($headers);
                     if ($filename) {
                         $this->parsed['attachments'][] = [
                             'filename' => $filename,
@@ -130,7 +131,7 @@ class MimeMailParser
                     }
                 } elseif (strpos($contentType, 'image/') !== false || strpos($contentType, 'application/') !== false) {
                     // Embedded content
-                    $filename = $this->getFilename($headers) ?? $this->generateFilename($contentType);
+                    $filename = $this->_getFilename($headers) ?? $this->_generateFilename($contentType);
                     $this->parsed['attachments'][] = [
                         'filename' => $filename,
                         'content' => $decodedContent,
@@ -144,10 +145,11 @@ class MimeMailParser
     /**
      * Splits raw email into headers and body.
      *
-     * @param  string $rawEmail The raw email content.
-     * @return array An array containing headers and body.
+     * @param string $rawEmail  The raw email content.
+     *
+     * @return array  An array containing headers and body.
      */
-    private function splitHeadersAndBody($rawEmail)
+    private function _splitHeadersAndBody($rawEmail)
     {
         $parts = preg_split("/\r?\n\r?\n/", $rawEmail, 2);
         return [
@@ -159,10 +161,11 @@ class MimeMailParser
     /**
      * Parses email headers into an associative array.
      *
-     * @param  string $headerText The header section of the email.
-     * @return array Associative array of headers.
+     * @param string $headerText  The header section of the email.
+     *
+     * @return array  Associative array of headers.
      */
-    private function parseHeaders($headerText)
+    private function _parseHeaders($headerText)
     {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
@@ -187,10 +190,11 @@ class MimeMailParser
     /**
      * Extracts the boundary string from the Content-Type header.
      *
-     * @param  string $contentType The Content-Type header value.
-     * @return string|null The boundary string or null if not found.
+     * @param string $contentType  The Content-Type header value.
+     *
+     * @return string|null  The boundary string or null if not found.
      */
-    private function getBoundary($contentType)
+    private function _getBoundary($contentType)
     {
         if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
             return $matches[1];
@@ -201,11 +205,12 @@ class MimeMailParser
     /**
      * Splits the body into parts using the boundary.
      *
-     * @param  string $body     The body of the email.
-     * @param  string $boundary The boundary string.
-     * @return array An array of body parts.
+     * @param string $body      The body of the email.
+     * @param string $boundary  The boundary string.
+     *
+     * @return array  An array of body parts.
      */
-    private function splitBodyByBoundary($body, $boundary)
+    private function _splitBodyByBoundary($body, $boundary)
     {
         $boundary = preg_quote($boundary, '/');
         $pattern = "/--$boundary(?:--)?\r?\n/";
@@ -220,11 +225,12 @@ class MimeMailParser
     /**
      * Decodes content based on the encoding specified.
      *
-     * @param  string $content  The content to decode.
-     * @param  string $encoding The encoding type.
-     * @return string The decoded content.
+     * @param string $content   The content to decode.
+     * @param string $encoding  The encoding type.
+     *
+     * @return string  The decoded content.
      */
-    private function decodeContent($content, $encoding)
+    private function _decodeContent($content, $encoding)
     {
         $encoding = strtolower($encoding);
         switch ($encoding) {
@@ -242,10 +248,11 @@ class MimeMailParser
     /**
      * Extracts the filename from the headers.
      *
-     * @param  array $headers The headers array.
-     * @return string|null The filename or null if not found.
+     * @param array $headers  The headers array.
+     *
+     * @return string|null  The filename or null if not found.
      */
-    private function getFilename($headers)
+    private function _getFilename($headers)
     {
         if (isset($headers['Content-Disposition'])) {
             if (preg_match('/filename="([^"]+)"/i', $headers['Content-Disposition'], $matches)) {
@@ -263,10 +270,11 @@ class MimeMailParser
     /**
      * Generates a filename based on the content type.
      *
-     * @param  string $contentType The content type.
-     * @return string A generated filename.
+     * @param string $contentType  The content type.
+     *
+     * @return string  A generated filename.
      */
-    private function generateFilename($contentType)
+    private function _generateFilename($contentType)
     {
         $extension = explode('/', $contentType)[1] ?? 'dat';
         return 'attachment_' . uniqid() . '.' . $extension;
