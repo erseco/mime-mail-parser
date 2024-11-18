@@ -127,9 +127,9 @@ class MimeMailParser
                 }
             } else {
                 // Decode content
-                // Decode and clean content, removing boundary markers
                 $decodedContent = $this->_decodeContent($bodyContent, $encoding);
-                $decodedContent = preg_replace('/\r?\n--.*?--\r?\n$/s', '', $decodedContent);
+                // Clean up boundary markers and whitespace
+                $decodedContent = preg_replace('/\r?\n--.*?--\r?\n?$/s', '', $decodedContent);
                 $decodedContent = trim($decodedContent);
 
                 // Handle content based on type
@@ -306,6 +306,18 @@ class MimeMailParser
     public function getHeaders(): array
     {
         return $this->_parsed['headers'];
+    }
+
+    /**
+     * Gets a specific header value by name
+     * 
+     * @param string $name The header name (case-insensitive)
+     * @return string|null The header value or null if not found
+     */
+    public function getHeader(string $name): ?string
+    {
+        $name = strtolower($name);
+        return $this->_parsed['headers'][$name] ?? null;
     }
 
     /**
