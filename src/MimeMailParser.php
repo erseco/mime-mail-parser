@@ -62,7 +62,10 @@ class MimeMailParser
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $this->_parsed['headers'] = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
+        $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
+        // Remove content-transfer-encoding from public headers
+        unset($headers['content-transfer-encoding']);
+        $this->_parsed['headers'] = $headers;
 
         // Determine content type
         $contentType = $this->_parsed['headers']['content-type'] ?? 'text/plain';
@@ -124,7 +127,10 @@ class MimeMailParser
                 }
             } else {
                 // Decode content
-                $decodedContent = trim($this->_decodeContent($bodyContent, $encoding));
+                // Decode and clean content, removing boundary markers
+                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
+                $decodedContent = preg_replace('/\r?\n--.*?--\r?\n$/s', '', $decodedContent);
+                $decodedContent = trim($decodedContent);
 
                 // Handle content based on type
                 if (strpos($contentType, 'text/html') !== false) {
@@ -418,7 +424,7 @@ class MimeMailParser
      */
     public function getContentType(): ?string
     {
-        return $this->_parsed['headers']['Content-Type'] ?? null;
+        return $this->_parsed['headers']['content-type'] ?? null;
     }
 
     /**
