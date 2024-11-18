@@ -77,8 +77,8 @@ class MimeMailParser
             }
         } else {
             // Single part email
-            $encoding = $this->parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
-            $decodedContent = $this->decodeContent($bodySection, $encoding);
+            $encoding = $this->_parsed['headers']['Content-Transfer-Encoding'] ?? '7bit';
+            $decodedContent = $this->_decodeContent($bodySection, $encoding);
             if (strpos($contentType, 'text/html') !== false) {
                 $this->parsed['html'] .= $decodedContent;
             } else {
