@@ -312,6 +312,7 @@ class MimeMailParser
      * Gets a specific header value by name
      * 
      * @param string $name The header name (case-insensitive)
+     * 
      * @return string|null The header value or null if not found
      */
     public function getHeader(string $name): ?string
