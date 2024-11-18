@@ -30,7 +30,7 @@ class MimeMailParser
      *
      * @param string $rawEmail The raw email content as a string.
      */
-    public function __construct($rawEmail)
+    public function __construct(string $rawEmail)
     {
         $this->_rawEmail = $rawEmail;
         $this->_parseEmail();
@@ -44,7 +44,7 @@ class MimeMailParser
      *
      * @return void
      */
-    private function _parseEmail()
+    private function _parseEmail(): void
     {
         // Split headers and body
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
@@ -149,7 +149,7 @@ class MimeMailParser
      *
      * @return array  An array containing headers and body.
      */
-    private function _splitHeadersAndBody($rawEmail)
+    private function _splitHeadersAndBody(string $rawEmail): array
     {
         $parts = preg_split("/\r?\n\r?\n/", $rawEmail, 2);
         return [
@@ -165,7 +165,7 @@ class MimeMailParser
      *
      * @return array  Associative array of headers.
      */
-    private function _parseHeaders($headerText)
+    private function _parseHeaders(string $headerText): array
     {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
@@ -194,7 +194,7 @@ class MimeMailParser
      *
      * @return string|null  The boundary string or null if not found.
      */
-    private function _getBoundary($contentType)
+    private function _getBoundary(string $contentType): ?string
     {
         if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
             return $matches[1];
@@ -210,7 +210,7 @@ class MimeMailParser
      *
      * @return array  An array of body parts.
      */
-    private function _splitBodyByBoundary($body, $boundary)
+    private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
         $pattern = "/--$boundary(?:--)?\r?\n/";
@@ -230,7 +230,7 @@ class MimeMailParser
      *
      * @return string  The decoded content.
      */
-    private function _decodeContent($content, $encoding)
+    private function _decodeContent(string $content, string $encoding): string
     {
         $encoding = strtolower($encoding);
         switch ($encoding) {
@@ -252,7 +252,7 @@ class MimeMailParser
      *
      * @return string|null  The filename or null if not found.
      */
-    private function _getFilename($headers)
+    private function _getFilename(array $headers): ?string
     {
         if (isset($headers['Content-Disposition'])) {
             if (preg_match('/filename="([^"]+)"/i', $headers['Content-Disposition'], $matches)) {
@@ -274,7 +274,7 @@ class MimeMailParser
      *
      * @return string  A generated filename.
      */
-    private function _generateFilename($contentType)
+    private function _generateFilename(string $contentType): string
     {
         $extension = explode('/', $contentType)[1] ?? 'dat';
         return 'attachment_' . uniqid() . '.' . $extension;
@@ -285,9 +285,9 @@ class MimeMailParser
      *
      * @return array The email headers.
      */
-    public function getHeaders()
+    public function getHeaders(): array
     {
-        return $this->parsed['headers'];
+        return $this->_parsed['headers'];
     }
 
     /**
@@ -295,9 +295,9 @@ class MimeMailParser
      *
      * @return string|null The HTML content or null if not available.
      */
-    public function getHtmlPart()
+    public function getHtmlPart(): ?string
     {
-        return !empty($this->parsed['html']) ? $this->parsed['html'] : null;
+        return !empty($this->_parsed['html']) ? $this->_parsed['html'] : null;
     }
 
     /**
@@ -305,9 +305,9 @@ class MimeMailParser
      *
      * @return string|null The text content or null if not available.
      */
-    public function getTextPart()
+    public function getTextPart(): ?string
     {
-        return !empty($this->parsed['text']) ? $this->parsed['text'] : null;
+        return !empty($this->_parsed['text']) ? $this->_parsed['text'] : null;
     }
 
     /**
@@ -315,7 +315,7 @@ class MimeMailParser
      *
      * @return string The email body content
      */
-    public function getBody()
+    public function getBody(): string
     {
         // Try to get HTML content first
         $html_content = $this->getHtmlPart();
@@ -339,9 +339,9 @@ class MimeMailParser
      *
      * @return array An array of attachments.
      */
-    public function getAttachments()
+    public function getAttachments(): array
     {
-        return $this->parsed['attachments'];
+        return $this->_parsed['attachments'];
     }
 
 
@@ -350,9 +350,9 @@ class MimeMailParser
      *
      * @return string|null The 'From' header value or null if not found.
      */
-    public function getFrom()
+    public function getFrom(): ?string
     {
-        return $this->parsed['headers']['From'] ?? null;
+        return $this->_parsed['headers']['From'] ?? null;
     }
 
     /**
@@ -360,9 +360,9 @@ class MimeMailParser
      *
      * @return string|null The 'To' header value or null if not found.
      */
-    public function getTo()
+    public function getTo(): ?string
     {
-        return $this->parsed['headers']['To'] ?? null;
+        return $this->_parsed['headers']['To'] ?? null;
     }
 
     /**
@@ -370,9 +370,9 @@ class MimeMailParser
      *
      * @return string|null The 'Subject' header value or null if not found.
      */
-    public function getSubject()
+    public function getSubject(): ?string
     {
-        return $this->parsed['headers']['Subject'] ?? null;
+        return $this->_parsed['headers']['Subject'] ?? null;
     }
 
     /**
@@ -380,9 +380,9 @@ class MimeMailParser
      *
      * @return string|null The 'Message-ID' header value or null if not found.
      */
-    public function getId()
+    public function getId(): ?string
     {
-        return $this->parsed['headers']['Message-ID'] ?? null;
+        return $this->_parsed['headers']['Message-ID'] ?? null;
     }
 
     /**
@@ -390,9 +390,9 @@ class MimeMailParser
      *
      * @return \DateTime|null The date object or null if not found.
      */
-    public function getDate()
+    public function getDate(): ?\DateTime
     {
-        $dateString = $this->parsed['headers']['Date'] ?? null;
+        $dateString = $this->_parsed['headers']['Date'] ?? null;
         if ($dateString) {
             return new \DateTime($dateString);
         }
@@ -404,9 +404,9 @@ class MimeMailParser
      *
      * @return string|null The 'Content-Type' header value or null if not found.
      */
-    public function getContentType()
+    public function getContentType(): ?string
     {
-        return $this->parsed['headers']['Content-Type'] ?? null;
+        return $this->_parsed['headers']['Content-Type'] ?? null;
     }
 
     /**
@@ -414,7 +414,7 @@ class MimeMailParser
      *
      * @return array An array of parts.
      */
-    public function getParts()
+    public function getParts(): array
     {
         $parts = [];
         if (!empty($this->parsed['text'])) {
