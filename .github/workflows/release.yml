@@ -2,26 +2,40 @@
 name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
-  build_and_upload:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      # Checkout the code
       - uses: actions/checkout@v4
 
-      - name: Set environment variables
-        run: |
-          echo "RELEASE_TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Get tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Create package
-        run: composer archive
+        run: composer archive --format=zip --file="mime-mail-parser-${{ steps.tag.outputs.tag }}"
 
-      - name: Upload ZIP to the release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: mime-mail-parser-${{ env.RELEASE_TAG }}.zip
+          files: mime-mail-parser-${{ steps.tag.outputs.tag }}.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
