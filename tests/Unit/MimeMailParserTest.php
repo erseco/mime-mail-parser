@@ -134,15 +134,15 @@ EOF;
             ->and($parts[1]->contentType)->toBe('text/html')
             ->and($parts[1]->content)->toBe(
                 <<<EOF
-<html>
-<head>
-<title>This is an HTML email</title>
-</head>
-<body>
-<h1>This is the HTML version of the email</h1>
-</body>
-</html>
-    EOF
+                <html>
+                <head>
+                <title>This is an HTML email</title>
+                </head>
+                <body>
+                <h1>This is the HTML version of the email</h1>
+                </body>
+                </html>
+                EOF
             );
     }
 );
