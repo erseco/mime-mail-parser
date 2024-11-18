@@ -124,7 +124,7 @@ class MimeMailParser
                 }
             } else {
                 // Decode content
-                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
+                $decodedContent = trim($this->_decodeContent($bodyContent, $encoding));
 
                 // Handle content based on type
                 if (strpos($contentType, 'text/html') !== false) {
@@ -362,9 +362,9 @@ class MimeMailParser
      *
      * @return string|null The 'From' header value or null if not found.
      */
-    public function getFrom(): ?string
+    public function getFrom(): ?string 
     {
-        return $this->_parsed['headers']['From'] ?? null;
+        return $this->_parsed['headers']['from'] ?? null;
     }
 
     /**
@@ -374,7 +374,7 @@ class MimeMailParser
      */
     public function getTo(): ?string
     {
-        return $this->_parsed['headers']['To'] ?? null;
+        return $this->_parsed['headers']['to'] ?? null;
     }
 
     /**
@@ -384,7 +384,7 @@ class MimeMailParser
      */
     public function getSubject(): ?string
     {
-        return $this->_parsed['headers']['Subject'] ?? null;
+        return $this->_parsed['headers']['subject'] ?? null;
     }
 
     /**
@@ -394,7 +394,7 @@ class MimeMailParser
      */
     public function getId(): ?string
     {
-        return $this->_parsed['headers']['Message-ID'] ?? null;
+        return $this->_parsed['headers']['message-id'] ?? null;
     }
 
     /**
@@ -404,7 +404,7 @@ class MimeMailParser
      */
     public function getDate(): ?\DateTime
     {
-        $dateString = $this->_parsed['headers']['Date'] ?? null;
+        $dateString = $this->_parsed['headers']['date'] ?? null;
         if ($dateString) {
             return new \DateTime($dateString);
         }

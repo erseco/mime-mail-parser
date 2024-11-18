@@ -113,12 +113,12 @@ EOF;
 
         expect($message->getHeaders())->toBe(
             [
-            'From' => 'sender@example.com',
-            'To' => 'recipient@example.com',
-            'Subject' => 'This is an email with common headers',
-            'Date' => 'Thu, 24 Aug 2023 21:15:01 PST',
-            'MIME-Version' => '1.0',
-            'Content-Type' => 'multipart/mixed; boundary="----=_Part_1_1234567890"',
+            'from' => 'sender@example.com',
+            'to' => 'recipient@example.com',
+            'subject' => 'This is an email with common headers',
+            'date' => 'Thu, 24 Aug 2023 21:15:01 PST',
+            'mime-version' => '1.0',
+            'content-type' => 'multipart/mixed; boundary="----=_Part_1_1234567890"',
             ]
         )
         ->and($message->getSubject())->toBe('This is an email with common headers')
