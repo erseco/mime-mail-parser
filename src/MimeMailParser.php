@@ -17,8 +17,8 @@ namespace Erseco;
 class MimeMailParser
 {
 
-    private $rawEmail;
-    private $parsed = [
+    private $_rawEmail;
+    private $_parsed = [
         'headers' => [],
         'html' => '',
         'text' => '',
@@ -32,20 +32,25 @@ class MimeMailParser
      */
     public function __construct($rawEmail)
     {
-        $this->rawEmail = $rawEmail;
-        $this->parseEmail();
+        $this->_rawEmail = $rawEmail;
+        $this->_parseEmail();
     }
 
     /**
      * Parses the raw email content.
      */
-    private function parseEmail()
+    /**
+     * Parses the raw email content.
+     *
+     * @return void
+     */
+    private function _parseEmail()
     {
         // Split headers and body
-        list($headerSection, $bodySection) = $this->splitHeadersAndBody($this->rawEmail);
+        list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $this->parsed['headers'] = $this->parseHeaders($headerSection);
+        $this->_parsed['headers'] = $this->_parseHeaders($headerSection);
 
         // Determine content type
         $contentType = $this->parsed['headers']['Content-Type'] ?? 'text/plain';
@@ -77,7 +82,15 @@ class MimeMailParser
      * @param string $boundary          The boundary string.
      * @param string $parentContentType The content type of the parent part.
      */
-    private function parseMultipart($body, $boundary, $parentContentType)
+    /**
+     * Parses multipart content recursively.
+     *
+     * @param string $body              The body content.
+     * @param string $boundary          The boundary string.
+     * @param string $parentContentType The content type of the parent part.
+     * @return void
+     */
+    private function _parseMultipart($body, $boundary, $parentContentType)
     {
         // Split body into parts
         $parts = $this->splitBodyByBoundary($body, $boundary);
@@ -289,6 +302,11 @@ class MimeMailParser
         return !empty($this->parsed['text']) ? $this->parsed['text'] : null;
     }
 
+    /**
+     * Gets the email body, preferring HTML content over plain text
+     *
+     * @return string The email body content
+     */
     public function getBody()
     {
         // Try to get HTML content first

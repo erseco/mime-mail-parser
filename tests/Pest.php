@@ -51,6 +51,11 @@ expect()->extend(
 |
 */
 
+/**
+ * Example helper function
+ *
+ * @return void
+ */
 function something()
 {
     // ..
