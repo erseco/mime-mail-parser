@@ -42,7 +42,16 @@ EOF;
         ->and($message->getId())->toBe('<6e30b164904cf01158c7cc58f144b9ca@example.com>')
         ->and($message->getDate()->format('Y-m-d H:i:s'))->toBe('2023-08-25 15:36:13')
         ->and($message->getContentType())->toBe('text/html; charset=utf-8')
-        ->and($message->getHtmlPart())->toBe('Email content goes here.');
+        ->and($message->getHtmlPart())->toBe('Email content goes here.')
+        ->and($message->getHeaders())->toBe([
+            'from' => 'Sender <no-reply@example.com>',
+            'to' => 'Receiver <receiver@example.com>',
+            'subject' => 'Test Subject',
+            'message-id' => '<6e30b164904cf01158c7cc58f144b9ca@example.com>',
+            'mime-version' => '1.0',
+            'date' => 'Fri, 25 Aug 2023 15:36:13 +0200',
+            'content-type' => 'text/html; charset=utf-8',
+        ]);
     }
 );
 
@@ -84,6 +93,8 @@ it(
         $messageString = <<<EOF
 From: sender@example.com
 To: recipient@example.com
+Cc: cc@example.com
+Bcc: bcc@example.com
 Subject: This is an email with common headers
 Date: Thu, 24 Aug 2023 21:15:01 PST
 MIME-Version: 1.0
@@ -115,6 +126,8 @@ EOF;
             [
             'from' => 'sender@example.com',
             'to' => 'recipient@example.com',
+            'cc' => 'cc@example.com',
+            'bcc' => 'bcc@example.com',
             'subject' => 'This is an email with common headers',
             'date' => 'Thu, 24 Aug 2023 21:15:01 PST',
             'mime-version' => '1.0',
@@ -178,3 +191,99 @@ EOF;
         ->and($message->getParts()[1]->content)->toBe('<html><body><p>This is the HTML version.</p></body></html>');
     }
 );
+
+
+it('can parse a complex mail message', function () {
+
+    $rawEmail = file_get_contents(__DIR__ . '/../Fixtures/complex_email.eml');
+    $message = new MimeMailParser($rawEmail);
+
+    expect($message->getFrom())->toBe('Service <no-reply@example.com>')
+        ->and($message->getTo())->toBe('John Smith <john@example.com>')
+        ->and($message->getReplyTo())->toBe('Service <service@example.com>')
+        ->and($message->getSubject())->toBe('Appointment confirmation')
+        ->and($message->getId())->toBe('<fddff4779513441c3f0c1811193f5b12@example.com>')
+        ->and($message->getDate()->format('Y-m-d H:i:s'))->toBe('2023-08-24 14:51:14')
+        ->and($message->getBoundary())->toBe('lGiKDww4');
+
+    $parts = $message->getParts();
+
+    expect($parts)->toHaveCount(2)
+        ->and($parts[0]->contentType)->toBe('text/html; charset=utf-8')
+        ->and($parts[0]->headers)->toBe([
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Transfer-Encoding' => 'quoted-printable',
+        ])
+        ->and($parts[1]->contentType)->toBe('text/calendar; name=Appointment.ics')
+        ->and($parts[1]->headers)->toBe([
+            'Content-Type' => 'text/calendar; name=Appointment.ics',
+            'Content-Transfer-Encoding' => 'base64',
+            'Content-Disposition' => 'attachment; name=Appointment.ics;
+ filename=Appointment.ics',
+        ]);
+});
+
+it('can parse a multi-format mail message from file', function () {
+
+    $rawEmail = file_get_contents(__DIR__ . '/../Fixtures/multiformat_email.eml');
+    $message = new MimeMailParser($rawEmail);
+
+    expect($message->getFrom())->toBe('Service <no-reply@example.com>')
+        ->and($message->getTo())->toBe('John Smith <john@example.com>')
+        ->and($message->getReplyTo())->toBe('Service <service@example.com>')
+        ->and($message->getSubject())->toBe('Appointment confirmation')
+        ->and($message->getId())->toBe('<fddff4779513441c3f0c1811193f5b12@example.com>')
+        ->and($message->getDate()->format('Y-m-d H:i:s'))->toBe('2023-08-24 14:51:14')
+        ->and($message->getBoundary())->toBe('s1NCDW_3');
+
+    $parts = $message->getParts();
+
+    expect($parts)->toHaveCount(2)
+        ->and($parts[0]->contentType)->toBe('text/plain; charset=utf-8')
+        ->and($parts[0]->headers)->toBe([
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Transfer-Encoding' => 'quoted-printable',
+        ])
+        ->and($parts[1]->contentType)->toBe('text/html; charset=utf-8')
+        ->and($parts[1]->headers)->toBe([
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Transfer-Encoding' => 'quoted-printable',
+        ])->and($message->getTextPart())->toBe(<<<EOF
+Hi Arunas Skirius,
+This is a confirmation of your appointment.
+EOF);
+
+});
+
+it('can parse a multi-format mail message from file with attachments', function () {
+
+    $rawEmail = file_get_contents(__DIR__ . '/../Fixtures/attachment_email.eml');
+    $message = new MimeMailParser($rawEmail);
+
+
+    expect($message->getFrom())->toBe('Service <no-reply@example.com>')
+        ->and($message->getTo())->toBe('John Smith <john@example.com>')
+        ->and($message->getSubject())->toBe('test')
+        ->and($message->getDate()->format('Y-m-d H:i:s'))->toBe('2024-11-18 22:11:51')
+        ->and($message->getBoundary())->toBe('=_ZW4EMn2xKVeeM2hY-wks98q');
+
+    $parts = $message->getParts();
+
+    expect($parts)->toHaveCount(2)
+        ->and($parts[0]->contentType)->toBe('text/plain; charset=utf-8')
+        ->and($parts[0]->headers)->toBe([
+            'Content-Type' => 'text/plain; charset=utf-8',
+            'Content-Transfer-Encoding' => 'quoted-printable',
+        ])
+        ->and($parts[1]->contentType)->toBe('text/html; charset=utf-8')
+        ->and($parts[1]->headers)->toBe([
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Content-Transfer-Encoding' => 'quoted-printable',
+        ])->and($message->getTextPart()?->getContent())->toBe(<<<EOF
+Hi Arunas Skirius,
+This is a confirmation of your appointment.
+EOF);
+
+});
+
+

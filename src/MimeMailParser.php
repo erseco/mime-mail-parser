@@ -474,9 +474,9 @@ class MimeMailParser
             $contentType = $this->_parsed['headers']['content-type'] ?? '';
             if (preg_match('/charset=["\']?([^"\'\s;]+)["\']?/i', $contentType, $matches)) {
                 $charset = $matches[1];
-                $textContentType = "text/plain; charset=\"{$charset}\"";
+                $textContentType = "text/plain; charset={$charset}";
             } else {
-                $textContentType = 'text/plain; charset="utf-8"';
+                $textContentType = 'text/plain; charset=utf-8';
             }
             
             $parts[] = (object) [
@@ -491,9 +491,9 @@ class MimeMailParser
             $contentType = $this->_parsed['headers']['content-type'] ?? '';
             if (preg_match('/charset=["\']?([^"\'\s;]+)["\']?/i', $contentType, $matches)) {
                 $charset = $matches[1];
-                $htmlContentType = "text/html; charset=\"{$charset}\"";
+                $htmlContentType = "text/html; charset={$charset}";
             } else {
-                $htmlContentType = 'text/html; charset="utf-8"';
+                $htmlContentType = 'text/html; charset=utf-8';
             }
             
             $parts[] = (object) [
