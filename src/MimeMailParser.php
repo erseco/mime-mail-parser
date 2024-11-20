@@ -73,7 +73,7 @@ class MimeMailParser
         // Check for multipart content
         if (strpos($contentType, 'multipart/') !== false) {
             // Extract boundary
-            $boundary = $this->_getBoundary($contentType);
+            $boundary = $this->getBoundary();
             if ($boundary) {
                 // Parse multipart content
                 $this->_parseMultipart($bodySection, $boundary, $contentType);
@@ -82,6 +82,7 @@ class MimeMailParser
             // Single part email
             $encoding = $this->_parsed['headers']['content-transfer-encoding'] ?? '7bit';
             $decodedContent = $this->_decodeContent($bodySection, $encoding);
+
             if (strpos($contentType, 'text/html') !== false) {
                 $this->_parsed['html'] = $decodedContent;
             } else {
@@ -121,16 +122,18 @@ class MimeMailParser
 
             if (strpos($contentType, 'multipart/') !== false) {
                 // Nested multipart
-                $subBoundary = $this->_getBoundary($contentType);
+                $subBoundary = $this->getBoundary();
                 if ($subBoundary) {
                     $this->_parseMultipart($bodyContent, $subBoundary, $contentType);
                 }
             } else {
+
                 // Decode content
                 $decodedContent = $this->_decodeContent($bodyContent, $encoding);
                 // Clean up boundary markers and whitespace
                 $decodedContent = preg_replace('/\r?\n--.*?--\r?\n?$/s', '', $decodedContent);
                 $decodedContent = trim($decodedContent);
+
 
                 // Handle content based on type
                 if (strpos($contentType, 'text/html') !== false) {
@@ -139,21 +142,26 @@ class MimeMailParser
                     $this->_parsed['text'] = $decodedContent;
                 } elseif (isset($headers['content-disposition']) && strpos($headers['content-disposition'], 'attachment') !== false) {
                     // Handle attachment
+
                     $filename = $this->_getFilename($headers);
                     if ($filename) {
-                        $this->parsed['attachments'][] = [
+                        $this->_parsed['attachments'][] = [
                             'filename' => $filename,
                             'content' => $decodedContent,
-                            'mimetype' => $contentType
+                            'mimetype' => $contentType,
+                            'content-type' => $contentType,
+                            'headers' => $headers,
                         ];
                     }
                 } elseif (strpos($contentType, 'image/') !== false || strpos($contentType, 'application/') !== false) {
                     // Embedded content
                     $filename = $this->_getFilename($headers) ?? $this->_generateFilename($contentType);
-                    $this->parsed['attachments'][] = [
+                    $this->_parsed['attachments'][] = [
                         'filename' => $filename,
                         'content' => $decodedContent,
-                        'mimetype' => $contentType
+                        'mimetype' => $contentType,
+                        'content-type' => $contentType,
+                        'headers' => $headers,
                     ];
                 }
             }
@@ -206,16 +214,19 @@ class MimeMailParser
     }
 
     /**
-     * Extracts the boundary string from the Content-Type header.
+     * Extracts the boundary string from the Content-Type header stored in the headers array.
      *
-     * @param string $contentType The Content-Type header value.
-     *
-     * @return string|null  The boundary string or null if not found.
+     * @return string|null The boundary string or null if not found.
      */
-    private function _getBoundary(string $contentType): ?string
+    public function getBoundary(): ?string
     {
-        if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
-            return $matches[1];
+
+        if (isset( $this->_parsed['headers']['content-type'])) {
+
+            $contentType =  $this->_parsed['headers']['content-type'];
+            if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
+                return $matches[1];
+            }
         }
         return null;
     }
@@ -271,17 +282,18 @@ class MimeMailParser
      * @return string|null  The filename or null if not found.
      */
     private function _getFilename(array $headers): ?string
-    {
-        if (isset($headers['Content-Disposition'])) {
-            if (preg_match('/filename="([^"]+)"/i', $headers['Content-Disposition'], $matches)) {
+    {        
+        if (isset($headers['content-disposition'])) {
+            if (preg_match('/filename="?([^"]+)"?/i', $headers['content-disposition'], $matches)) {
                 return $matches[1];
             }
         }
-        if (isset($headers['Content-Type'])) {
-            if (preg_match('/name="([^"]+)"/i', $headers['Content-Type'], $matches)) {
+        if (isset($headers['content-type'])) {
+            if (preg_match('/name="?([^"]+)"?/i', $headers['content-type'], $matches)) {
                 return $matches[1];
             }
         }
+
         return null;
     }
 
@@ -397,6 +409,16 @@ class MimeMailParser
     }
 
     /**
+     * Retrieves the 'To' header from the parsed headers.
+     *
+     * @return string|null The 'To' header value or null if not found.
+     */
+    public function getReplyTo(): ?string
+    {
+        return $this->_parsed['headers']['reply-to'] ?? null;
+    }
+
+    /**
      * Retrieves the 'Subject' header from the parsed headers.
      *
      * @return string|null The 'Subject' header value or null if not found.
@@ -471,7 +493,7 @@ class MimeMailParser
                 'contentType' => $attachment['mimetype'],
                 'content' => $attachment['content'],
                 'filename' => $attachment['filename'],
-                'headers' => $this->parsed['headers'],
+                'headers' => $attachment['headers'],
                 'isAttachment' => true
             ];
         }
