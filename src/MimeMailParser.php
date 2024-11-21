@@ -72,9 +72,9 @@ class MimeMailParser
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $headers = $this->_parseHeaders($headerSection);
+        $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
         // Remove content-transfer-encoding from public headers
-        unset($headers['Content-Transfer-Encoding']);
+        unset($headers['content-transfer-encoding']);
         $this->_parsed['headers'] = $headers;
 
         // Determine content type
@@ -117,14 +117,14 @@ class MimeMailParser
      *
      * @return void
      */
-    private function _parseMultipart($body, $boundary, $parentContentType)
+    private function _parseMultipart($body, $boundary, $parentContentType): void
     {
         // Split body into parts
         $parts = $this->_splitBodyByBoundary($body, $boundary);
         foreach ($parts as $part) {
             // Split headers and content
             list($headerSection, $bodyContent) = $this->_splitHeadersAndBody($part);
-            $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
+            $headers = $this->_parseHeaders($headerSection);
 
             // Get content type and encoding
             $contentType = $headers['content-type'] ?? 'text/plain';
@@ -252,7 +252,7 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary(?:--)?\r?\n/";
+        $pattern = "/--$boundary(?:--)?(?:\r?\n|$)/";
         $parts = preg_split($pattern, $body);
         return array_filter(
             $parts, function ($part) {
