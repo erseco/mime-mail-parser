@@ -52,7 +52,7 @@ class MimeMailParser
         return new self(file_get_contents($filename));
     }
 
-    private function __construct(string $rawEmail)
+    public function __construct(string $rawEmail)
     {
         $this->_rawEmail = $rawEmail;
         $this->_parseEmail();
@@ -72,9 +72,9 @@ class MimeMailParser
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
+        $headers = $this->_parseHeaders($headerSection);
         // Remove content-transfer-encoding from public headers
-        unset($headers['content-transfer-encoding']);
+        unset($headers['Content-Transfer-Encoding']);
         $this->_parsed['headers'] = $headers;
 
         // Determine content type
@@ -354,13 +354,24 @@ class MimeMailParser
             return null;
         }
 
-        return (object)[
-            'getContent' => fn() => $this->_parsed['html'],
-            'getHeaders' => fn() => [
-                'Content-Type' => 'text/html; charset=utf-8',
-                'Content-Transfer-Encoding' => 'quoted-printable',
-            ]
-        ];
+        return new class($this->_parsed['html']) {
+            private $content;
+            
+            public function __construct($content) {
+                $this->content = $content;
+            }
+            
+            public function getContent() {
+                return $this->content;
+            }
+            
+            public function getHeaders() {
+                return [
+                    'Content-Type' => 'text/html; charset=utf-8',
+                    'Content-Transfer-Encoding' => 'quoted-printable',
+                ];
+            }
+        };
     }
 
     /**
@@ -374,13 +385,24 @@ class MimeMailParser
             return null;
         }
 
-        return (object)[
-            'getContent' => fn() => $this->_parsed['text'],
-            'getHeaders' => fn() => [
-                'Content-Type' => 'text/plain; charset=utf-8',
-                'Content-Transfer-Encoding' => 'quoted-printable',
-            ]
-        ];
+        return new class($this->_parsed['text']) {
+            private $content;
+            
+            public function __construct($content) {
+                $this->content = $content;
+            }
+            
+            public function getContent() {
+                return $this->content;
+            }
+            
+            public function getHeaders() {
+                return [
+                    'Content-Type' => 'text/plain; charset=utf-8',
+                    'Content-Transfer-Encoding' => 'quoted-printable',
+                ];
+            }
+        };
     }
 
     /**
