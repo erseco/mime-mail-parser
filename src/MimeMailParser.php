@@ -658,7 +658,6 @@ class MimeMailParser
     }
 
 
-}
     private function _getHeaderCaseInsensitive(array $headers, string $name): ?string
     {
         $nameLower = strtolower($name);
@@ -669,3 +668,4 @@ class MimeMailParser
         }
         return null;
     }
+}
