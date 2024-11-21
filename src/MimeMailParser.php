@@ -144,26 +144,51 @@ class Message implements \JsonSerializable
         return trim($header, '<>');
     }
 
+    /**
+     * Get the email subject
+     *
+     * @return string The subject line or empty string if not found
+     */
     public function getSubject(): string
     {
         return $this->getHeader('Subject', '');
     }
 
+    /**
+     * Get the sender's email address
+     *
+     * @return string The From header value or empty string if not found
+     */
     public function getFrom(): string
     {
         return $this->getHeader('From', '');
     }
 
+    /**
+     * Get the recipient's email address
+     *
+     * @return string The To header value or empty string if not found
+     */
     public function getTo(): string
     {
         return $this->getHeader('To', '');
     }
 
+    /**
+     * Get the reply-to email address
+     *
+     * @return string The Reply-To header value or empty string if not found
+     */
     public function getReplyTo(): string
     {
         return $this->getHeader('Reply-To', '');
     }
 
+    /**
+     * Get the date when the email was sent
+     *
+     * @return \DateTime|null DateTime object of the email date or null if invalid/not found
+     */
     public function getDate(): ?\DateTime
     {
         return \DateTime::createFromFormat(
