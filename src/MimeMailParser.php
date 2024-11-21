@@ -28,6 +28,15 @@ namespace Erseco;
  */
 /**
  * Message class for handling email message parsing
+ *
+ * This class provides functionality to parse and extract information from email messages,
+ * including headers, body parts, and attachments.
+ *
+ * @category Library
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
  */
 class Message implements \JsonSerializable
 {
@@ -197,11 +206,21 @@ class Message implements \JsonSerializable
         ) ?: null;
     }
 
+    /**
+     * Get all message parts
+     *
+     * @return MessagePart[] Array of all message parts
+     */
     public function getParts(): array
     {
         return $this->parts;
     }
 
+    /**
+     * Get the HTML part of the message if available
+     *
+     * @return MessagePart|null The HTML message part or null if not found
+     */
     public function getHtmlPart(): ?MessagePart
     {
         foreach ($this->parts as $part) {
@@ -213,6 +232,11 @@ class Message implements \JsonSerializable
         return null;
     }
 
+    /**
+     * Get the plain text part of the message if available
+     *
+     * @return MessagePart|null The text message part or null if not found
+     */
     public function getTextPart(): ?MessagePart
     {
         foreach ($this->parts as $part) {
