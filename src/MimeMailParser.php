@@ -184,7 +184,7 @@ class MimeMailParser
      *
      * @return array  Associative array of headers.
      */
-    private function _parseHeaders(string $headerText): array
+    private function _parseHeaders(string $headerText): array 
     {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
@@ -197,14 +197,12 @@ class MimeMailParser
                 if ($currentHeader) {
                     $currentValue .= ' ' . trim($matches[1]);
                     $headers[$currentHeader] = $currentValue;
-                    $headers[strtolower($currentHeader)] = $currentValue;
                 }
             } elseif (preg_match('/^(.*?):\s*(.*)$/', $line, $matches)) {
                 // New header
                 $currentHeader = $matches[1];
                 $currentValue = trim($matches[2]);
                 $headers[$currentHeader] = $currentValue;
-                $headers[strtolower($currentHeader)] = $currentValue;
             }
         }
 
@@ -240,7 +238,7 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary\r?\n(.*?)(?=--$boundary(?:--)?(?:\r?\n|$))/s";
+        $pattern = "/--$boundary\r?\n(.*?)(?=--$boundary(?:--)?(?:\r?\n|$)|$)/s";
         preg_match_all($pattern, $body, $matches);
         
         $parts = [];
