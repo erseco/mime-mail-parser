@@ -88,13 +88,13 @@ class MimeMailParser
             }
         } else {
             // Single part email
-            $encoding = $this->_parsed['headers']['content-transfer-encoding'] ?? '7bit';
+            $encoding = $this->_getHeaderCaseInsensitive($this->_parsed['headers'], 'content-transfer-encoding') ?? '7bit';
             $decodedContent = $this->_decodeContent($bodySection, $encoding);
 
-            if (strpos($contentType, 'text/html') !== false) {
-                $this->_parsed['html'] = $decodedContent;
+            if (strpos(strtolower($contentType), 'text/html') !== false) {
+                $this->_parsed['html'] = trim($decodedContent);
             } else {
-                $this->_parsed['text'] = $decodedContent;
+                $this->_parsed['text'] = trim($decodedContent);
             }
         }
     }
