@@ -90,11 +90,15 @@ class MimeMailParser
             // Single part email
             $encoding = $this->_getHeaderCaseInsensitive($this->_parsed['headers'], 'content-transfer-encoding') ?? '7bit';
             $decodedContent = $this->_decodeContent($bodySection, $encoding);
+            $contentTypeLower = strtolower($contentType);
 
-            if (strpos(strtolower($contentType), 'text/html') !== false) {
+            if (strpos($contentTypeLower, 'text/html') === 0) {
                 $this->_parsed['html'] = trim($decodedContent);
-            } else {
+            } elseif (strpos($contentTypeLower, 'text/plain') === 0) {
                 $this->_parsed['text'] = trim($decodedContent);
+            } else {
+                // Default to HTML if content-type matches neither
+                $this->_parsed['html'] = trim($decodedContent);
             }
         }
     }
