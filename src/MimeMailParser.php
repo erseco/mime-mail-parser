@@ -253,20 +253,14 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary(?:--)?(?:\r?\n|\r|$)/";
+        $pattern = "/--$boundary(?:--)?[\r\n]+/";
         $parts = preg_split($pattern, $body);
         
-        // Filter out empty parts and clean up boundaries that might be on the same line
-        return array_filter(array_map(
-            function ($part) use ($boundary) {
-                $part = trim($part);
-                if (empty($part)) return null;
-                // Clean up any boundary markers that might be on the same line
-                $part = preg_replace("/--$boundary(?:--)?$/m", '', $part);
-                return trim($part);
-            },
-            $parts
-        ));
+        // Remove first empty part and last part after final boundary
+        array_shift($parts);
+        array_pop($parts);
+        
+        return array_map('trim', array_filter($parts));
     }
 
     /**
@@ -486,7 +480,7 @@ class MimeMailParser
      */
     public function getSubject(): ?string
     {
-        return $this->_parsed['headers']['subject'] ?? null;
+        return $this->_parsed['headers']['Subject'] ?? $this->_parsed['headers']['subject'] ?? null;
     }
 
     /**
