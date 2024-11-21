@@ -32,6 +32,7 @@ class MimeMailParser
     private $_rawEmail;
     private $_parsed = [
         'headers' => [],
+        'headerKeys' => [], // Map lowercase keys to original case
         'html' => '',
         'text' => '',
         'attachments' => []
@@ -198,27 +199,32 @@ class MimeMailParser
      *
      * @return array  Associative array of headers.
      */
-    private function _parseHeaders(string $headerText): array
+    private function _parseHeaders(string $headerText): array 
     {
         $headers = [];
+        $headerKeys = [];
         $lines = preg_split("/\r?\n/", $headerText);
         $currentHeader = '';
+        $currentKey = '';
 
         foreach ($lines as $line) {
             if (preg_match('/^\s+/', $line)) {
                 // Continuation of previous header
                 if ($currentHeader) {
-                    $headers[$currentHeader] .= ' ' . trim($line);
+                    $headers[$currentKey] .= ' ' . trim($line);
                 }
             } else {
                 $parts = explode(':', $line, 2);
                 if (count($parts) == 2) {
-                    $currentHeader = $parts[0]; // Original case
-                    $headers[$currentHeader] = trim($parts[1]);
+                    $currentHeader = trim($parts[0]); // Original case
+                    $currentKey = strtolower($currentHeader);
+                    $headerKeys[$currentKey] = $currentHeader;
+                    $headers[$currentKey] = trim($parts[1]);
                 }
             }
         }
 
+        $this->_parsed['headerKeys'] = $headerKeys;
         return $headers;
     }
 
@@ -251,16 +257,15 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary(?:--)?(?:\r?\n|\r|$)/";
+        $pattern = "/--$boundary\r?\n|--$boundary--\r?\n/";
         $parts = preg_split($pattern, $body);
         
-        // Remove first empty part and last part after final boundary
-        if (empty($parts[0])) {
-            array_shift($parts);
-        }
-        array_pop($parts);
+        // Remove empty parts
+        $parts = array_filter($parts, function($part) {
+            return !empty(trim($part));
+        });
         
-        return array_map('trim', array_filter($parts));
+        return array_values(array_map('trim', $parts));
     }
 
     /**
@@ -341,8 +346,18 @@ class MimeMailParser
      */
     public function getHeader(string $name): ?string
     {
-        $name = strtolower($name);
-        return $this->_parsed['headers'][$name] ?? null;
+        $key = strtolower($name);
+        return $this->_parsed['headers'][$key] ?? null;
+    }
+
+    public function getHeaders(): array
+    {
+        $headers = [];
+        foreach ($this->_parsed['headers'] as $key => $value) {
+            $originalKey = $this->_parsed['headerKeys'][$key] ?? $key;
+            $headers[$key] = $value;
+        }
+        return $headers;
     }
 
     /**
@@ -449,7 +464,7 @@ class MimeMailParser
      */
     public function getFrom(): ?string 
     {
-        return $this->_parsed['headers']['from'] ?? null;
+        return $this->getHeader('from');
     }
 
     /**
@@ -459,7 +474,7 @@ class MimeMailParser
      */
     public function getTo(): ?string
     {
-        return $this->_parsed['headers']['to'] ?? null;
+        return $this->getHeader('to');
     }
 
     /**
@@ -469,7 +484,7 @@ class MimeMailParser
      */
     public function getReplyTo(): ?string
     {
-        return $this->_parsed['headers']['reply-to'] ?? null;
+        return $this->getHeader('reply-to');
     }
 
     /**
