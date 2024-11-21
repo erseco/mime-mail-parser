@@ -72,10 +72,9 @@ class MimeMailParser
         list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
 
         // Parse headers
-        $headers = array_change_key_case($this->_parseHeaders($headerSection), CASE_LOWER);
+        $this->_parsed['headers'] = $this->_parseHeaders($headerSection);
         // Remove content-transfer-encoding from public headers
-        unset($headers['content-transfer-encoding']);
-        $this->_parsed['headers'] = $headers;
+        unset($this->_parsed['headers']['Content-Transfer-Encoding']);
 
         // Determine content type
         $contentType = $this->_parsed['headers']['content-type'] ?? 'text/plain';
@@ -210,11 +209,13 @@ class MimeMailParser
         foreach ($lines as $line) {
             if (preg_match('/^\s+/', $line)) {
                 // Continuation of previous header
-                $headers[$currentHeader] .= ' ' . trim($line);
+                if ($currentHeader) {
+                    $headers[$currentHeader] .= ' ' . trim($line);
+                }
             } else {
                 $parts = explode(':', $line, 2);
                 if (count($parts) == 2) {
-                    $currentHeader = trim($parts[0]);
+                    $currentHeader = $parts[0]; // Preserve original case
                     $headers[$currentHeader] = trim($parts[1]);
                 }
             }
@@ -252,13 +253,20 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary(?:--)?(?:\r?\n|$)/";
+        $pattern = "/--$boundary(?:--)?(?:\r?\n|\r|$)/";
         $parts = preg_split($pattern, $body);
-        return array_filter(
-            $parts, function ($part) {
-                return trim($part) !== '';
-            }
-        );
+        
+        // Filter out empty parts and clean up boundaries that might be on the same line
+        return array_filter(array_map(
+            function ($part) use ($boundary) {
+                $part = trim($part);
+                if (empty($part)) return null;
+                // Clean up any boundary markers that might be on the same line
+                $part = preg_replace("/--$boundary(?:--)?$/m", '', $part);
+                return trim($part);
+            },
+            $parts
+        ));
     }
 
     /**
@@ -447,7 +455,8 @@ class MimeMailParser
      */
     public function getFrom(): ?string 
     {
-        return $this->_parsed['headers']['from'] ?? null;
+        $from = $this->_parsed['headers']['From'] ?? $this->_parsed['headers']['from'] ?? null;
+        return $from;
     }
 
     /**
