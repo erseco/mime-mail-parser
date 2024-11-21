@@ -117,45 +117,32 @@ class MimeMailParser
      */
     private function _parseMultipart($body, $boundary, $parentContentType): void
     {
-        // Split body into parts
         $parts = $this->_splitBodyByBoundary($body, $boundary);
+        
         foreach ($parts as $part) {
-            // Split headers and content
             list($headerSection, $bodyContent) = $this->_splitHeadersAndBody($part);
             $headers = $this->_parseHeaders($headerSection);
+            
+            $contentType = $this->_getHeaderCaseInsensitive($headers, 'content-type') ?? 'text/plain';
+            $encoding = $this->_getHeaderCaseInsensitive($headers, 'content-transfer-encoding') ?? '7bit';
+            $disposition = $this->_getHeaderCaseInsensitive($headers, 'content-disposition');
 
-            // Get content type and encoding
-            $contentType = null;
-            $encoding = null;
-            foreach ($headers as $key => $value) {
-                if (strtolower($key) === 'content-type') {
-                    $contentType = $value;
-                } elseif (strtolower($key) === 'content-transfer-encoding') {
-                    $encoding = $value;
-                }
-            }
-            $contentType = $contentType ?? 'text/plain';
-            $encoding = $encoding ?? '7bit';
-
-            if (strpos($contentType, 'multipart/') !== false) {
-                // Extract boundary from content type
+            if (strpos(strtolower($contentType), 'multipart/') === 0) {
                 if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
-                    $subBoundary = $matches[1];
-                    $this->_parseMultipart($bodyContent, $subBoundary, $contentType);
+                    $this->_parseMultipart($bodyContent, $matches[1], $contentType);
                 }
             } else {
-                // Decode content
-                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
-                $decodedContent = trim($decodedContent);
-
-                // Handle content based on type
-                if (strpos($contentType, 'text/html') !== false) {
+                $decodedContent = trim($this->_decodeContent($bodyContent, $encoding));
+                
+                $contentTypeLower = strtolower($contentType);
+                if (strpos($contentTypeLower, 'text/html') === 0) {
                     $this->_parsed['html'] = $decodedContent;
-                } elseif (strpos($contentType, 'text/plain') !== false) {
+                } elseif (strpos($contentTypeLower, 'text/plain') === 0) {
                     $this->_parsed['text'] = $decodedContent;
-                } elseif (isset($headers['Content-Disposition']) && 
-                         strpos($headers['Content-Disposition'], 'attachment') !== false) {
-
+                }
+                
+                // Handle attachments
+                if ($disposition && strpos(strtolower($disposition), 'attachment') !== false) {
                     $filename = $this->_getFilename($headers);
                     if ($filename) {
                         $this->_parsed['attachments'][] = [
@@ -163,19 +150,9 @@ class MimeMailParser
                             'content' => $decodedContent,
                             'mimetype' => $contentType,
                             'content-type' => $contentType,
-                            'headers' => $headers,
+                            'headers' => $headers
                         ];
                     }
-                } elseif (strpos($contentType, 'image/') !== false || strpos($contentType, 'application/') !== false) {
-                    // Embedded content
-                    $filename = $this->_getFilename($headers) ?? $this->_generateFilename($contentType);
-                    $this->_parsed['attachments'][] = [
-                        'filename' => $filename,
-                        'content' => $decodedContent,
-                        'mimetype' => $contentType,
-                        'content-type' => $contentType,
-                        'headers' => $headers,
-                    ];
                 }
             }
         }
@@ -209,24 +186,33 @@ class MimeMailParser
      *
      * @return array  Associative array of headers.
      */
-    private function _parseHeaders(string $headerText): array
+    private function _parseHeaders(string $headerText): array 
     {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
         $currentHeader = '';
+        $currentValue = '';
         
         foreach ($lines as $line) {
-            if (preg_match('/^\s+/', $line)) {
-                // Continuation of previous header
+            // Handle header continuation
+            if (preg_match('/^\s+(.+)$/', $line, $matches)) {
                 if ($currentHeader) {
-                    $headers[$currentHeader] .= ' ' . trim($line);
+                    $currentValue .= ' ' . trim($matches[1]);
+                    $headers[$currentHeader] = $currentValue;
                 }
             } else {
+                // New header
                 if (preg_match('/^(.*?):\s*(.*)$/', $line, $matches)) {
-                    $currentHeader = $matches[1]; // Preserve original case
-                    $headers[$currentHeader] = trim($matches[2]);
+                    $currentHeader = $matches[1];
+                    $currentValue = trim($matches[2]);
+                    $headers[$currentHeader] = $currentValue;
                 }
             }
+        }
+        
+        // Store lowercase versions for case-insensitive lookup
+        foreach ($headers as $key => $value) {
+            $headers[strtolower($key)] = $value;
         }
 
         return $headers;
@@ -673,3 +659,13 @@ class MimeMailParser
 
 
 }
+    private function _getHeaderCaseInsensitive(array $headers, string $name): ?string
+    {
+        $nameLower = strtolower($name);
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === $nameLower) {
+                return $value;
+            }
+        }
+        return null;
+    }
