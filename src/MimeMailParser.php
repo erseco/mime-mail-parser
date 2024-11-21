@@ -91,11 +91,24 @@ class Message implements \JsonSerializable
         return $this->boundary;
     }
 
+    /**
+     * Get all headers from the email message
+     *
+     * @return array<string, string> Array of headers with key-value pairs
+     */
     public function getHeaders(): array
     {
         return $this->headers;
     }
 
+    /**
+     * Get a specific header value from the email message
+     *
+     * @param string $header  The name of the header to retrieve
+     * @param mixed  $default Default value if header is not found
+     *
+     * @return string|null The header value if found, default value otherwise
+     */
     public function getHeader(string $header, $default = null): ?string
     {
         $header = strtolower($header);
@@ -109,11 +122,21 @@ class Message implements \JsonSerializable
         return $default;
     }
 
+    /**
+     * Get the Content-Type header of the email message
+     *
+     * @return string The content type or empty string if not found
+     */
     public function getContentType(): string
     {
         return $this->getHeader('Content-Type', '');
     }
 
+    /**
+     * Get the Message-ID of the email
+     *
+     * @return string The message ID without angle brackets
+     */
     public function getId(): string
     {
         $header = $this->getHeader('Message-ID', '');
