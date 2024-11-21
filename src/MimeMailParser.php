@@ -449,8 +449,7 @@ class MimeMailParser
      */
     public function getFrom(): ?string 
     {
-        $from = $this->_parsed['headers']['From'] ?? $this->_parsed['headers']['from'] ?? null;
-        return $from;
+        return $this->_parsed['headers']['from'] ?? null;
     }
 
     /**
