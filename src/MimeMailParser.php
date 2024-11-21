@@ -202,7 +202,12 @@ class MimeMailParser
                 // New header
                 $currentHeader = $matches[1];
                 $currentValue = trim($matches[2]);
+                
+                // Store with original case
                 $headers[$currentHeader] = $currentValue;
+                
+                // Also store lowercase version for case-insensitive lookup
+                $this->_parsed['headerKeys'][strtolower($currentHeader)] = $currentHeader;
             }
         }
 
@@ -520,7 +525,7 @@ class MimeMailParser
      */
     public function getContentType(): ?string
     {
-        return $this->_parsed['headers']['content-type'] ?? null;
+        return $this->getHeader('content-type');
     }
 
     /**
