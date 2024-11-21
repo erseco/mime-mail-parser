@@ -39,19 +39,19 @@ class Message implements \JsonSerializable
      */
     protected array $parts = [];
 
-    public function __construct(string $message)
+    public function __construct(string $message, bool $ignoreSignature = false)
     {
         $this->message = $message;
 
-        $this->parse();
+        $this->parse($ignoreSignature);
     }
 
-    public static function fromString($message): self
+    public static function fromString(string $message, bool $ignoreSignature = false): self
     {
         return new self($message);
     }
 
-    public static function fromFile($path): self
+    public static function fromFile($path, bool $ignoreSignature = false): self
     {
         return new self(file_get_contents($path));
     }
@@ -181,7 +181,7 @@ class Message implements \JsonSerializable
     /**
      * Parse the email message into headers and body parts.
      */
-    protected function parse(): void
+    protected function parse(bool $ignoreSignature): void
     {
         $lines = explode("\n", $this->message);
         $headerInProgress = null;
