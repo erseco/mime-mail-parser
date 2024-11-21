@@ -26,6 +26,9 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
+/**
+ * Message class for handling email message parsing
+ */
 class Message implements \JsonSerializable
 {
     protected string $message;
@@ -39,6 +42,12 @@ class Message implements \JsonSerializable
      */
     protected array $parts = [];
 
+    /**
+     * Create a new Message instance
+     *
+     * @param string $message         The raw email message
+     * @param bool   $ignoreSignature Whether to ignore message signatures
+     */
     public function __construct(string $message, bool $ignoreSignature = false)
     {
         $this->message = $message;
@@ -46,16 +55,37 @@ class Message implements \JsonSerializable
         $this->parse($ignoreSignature);
     }
 
+    /**
+     * Create a Message instance from a string
+     *
+     * @param string $message         The raw email message string
+     * @param bool   $ignoreSignature Whether to ignore message signatures
+     *
+     * @return self
+     */
     public static function fromString(string $message, bool $ignoreSignature = false): self
     {
         return new self($message);
     }
 
+    /**
+     * Create a Message instance from a file
+     *
+     * @param string $path            Path to the email message file
+     * @param bool   $ignoreSignature Whether to ignore message signatures
+     *
+     * @return self
+     */
     public static function fromFile($path, bool $ignoreSignature = false): self
     {
         return new self(file_get_contents($path));
     }
 
+    /**
+     * Get the message boundary
+     *
+     * @return string The message boundary
+     */
     public function getBoundary(): string
     {
         return $this->boundary;
