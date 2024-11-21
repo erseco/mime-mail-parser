@@ -235,7 +235,7 @@ VGhpcyBpcyBhIHRlc3Qgc3RyaW5n
 ------=_Part_1_1234567890--
 EOF;
 
-    $message = new Message($messageString);
+    $message = new MimeMailParser($messageString);
 
     $parts = $message->getParts();
 
