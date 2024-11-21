@@ -26,7 +26,7 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-class Message
+class MimeMailParser
 {
 
     private $_rawEmail;

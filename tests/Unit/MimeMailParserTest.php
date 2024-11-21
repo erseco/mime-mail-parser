@@ -33,7 +33,7 @@ Content-Transfer-Encoding: quoted-printable
 Email content goes here.
 EOF;
 
-    $message = Message::fromString($messageString);
+    $message = MimeMailParser::fromString($messageString);
 
     expect($message->getFrom())->toBe('Sender <no-reply@example.com>')
         ->and($message->getTo())->toBe('Receiver <receiver@example.com>')
@@ -62,7 +62,7 @@ content-transfer-encoding: quoted-printable
 Email content goes here.
 EOF;
 
-    $message = Message::fromString($messageString);
+    $message = MimeMailParser::fromString($messageString);
 
     expect($message->getHeaders())->toBe([
         'from' => 'Sender <no-reply@example.com>',
@@ -147,7 +147,7 @@ EOF);
 });
 
 it('can parse a complex mail message', function () {
-    $message = Message::fromFile(__DIR__ . '/../Fixtures/complex_email.eml');
+    $message = MimeMailParser::fromFile(__DIR__ . '/../Fixtures/complex_email.eml');
 
     expect($message->getFrom())->toBe('Arunas Practice <no-reply@example.com>')
         ->and($message->getTo())->toBe('Arunas arukomp <arukomp@example.com>')
@@ -175,7 +175,7 @@ it('can parse a complex mail message', function () {
 });
 
 it('can parse a multi-format mail message', function () {
-    $message = Message::fromFile(__DIR__ . '/../Fixtures/multiformat_email.eml');
+    $message = MimeMailParser::fromFile(__DIR__ . '/../Fixtures/multiformat_email.eml');
 
     expect($message->getFrom())->toBe('Arunas Practice <no-reply@example.com>')
         ->and($message->getTo())->toBe('Arunas arukomp <arukomp@example.com>')
@@ -283,7 +283,7 @@ Content-Type: text/html; charset="utf-8"
 ------=_Part_1_1234567890--
 EOF;
 
-    $message = Message::fromString($messageString);
+    $message = MimeMailParser::fromString($messageString);
 
     expect($message->getFrom())->toBe('sender@example.com')
         ->and($message->getHtmlPart()?->getContent())->toBe(<<<EOF
@@ -326,7 +326,7 @@ Content-Disposition: attachment; name=test.txt;
 VGhpcyBpcyBhIHRlc3Qgc3RyaW5n--b552as-tfy--
 EOF;
 
-    $message = Message::fromString($messageString);
+    $message = MimeMailParser::fromString($messageString);
 
     expect($message->getParts())->toHaveCount(2)
         ->and($message->getParts()[0]->getContent())->toBe(<<<EOF
@@ -372,7 +372,7 @@ Content-Disposition: attachment; name=test.txt;
 EOF;
     $messageString = str_replace("\n", "\r\n", $messageString);
 
-    $message = Message::fromString($messageString);
+    $message = MimeMailParser::fromString($messageString);
 
     expect($message->getParts())->toHaveCount(2)
         ->and($message->getParts()[1]->isAttachment())->toBe(true)
