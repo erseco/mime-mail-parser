@@ -210,13 +210,13 @@ class MimeMailParser
             if (preg_match('/^\s+/', $line)) {
                 // Continuation of previous header
                 if ($currentHeader) {
-                    $headers[$currentHeader] .= ' ' . trim($line);
+                    $headers[strtolower($currentHeader)] .= ' ' . trim($line);
                 }
             } else {
                 $parts = explode(':', $line, 2);
                 if (count($parts) == 2) {
                     $currentHeader = $parts[0]; // Preserve original case
-                    $headers[$currentHeader] = trim($parts[1]);
+                    $headers[strtolower($currentHeader)] = trim($parts[1]);
                 }
             }
         }
