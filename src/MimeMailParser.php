@@ -256,11 +256,21 @@ class Message implements \JsonSerializable
         return array_values(array_filter($this->parts, fn ($part) => $part->isAttachment()));
     }
 
+    /**
+     * Get the total size of the email message in bytes
+     *
+     * @return int Size of the message in bytes
+     */
     public function getSize(): int
     {
         return strlen($this->message);
     }
 
+    /**
+     * Convert the message to an array representation
+     *
+     * @return array<string, mixed> Array containing message data
+     */
     public function toArray(): array
     {
         return [
@@ -275,13 +285,25 @@ class Message implements \JsonSerializable
         ];
     }
 
+    /**
+     * Specify data which should be serialized to JSON
+     *
+     * @return array<string, mixed> Data to be JSON serialized
+     */
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
     }
 
     /**
-     * Parse the email message into headers and body parts.
+     * Parse the email message into headers and body parts
+     *
+     * This method processes the raw email message, extracting headers and
+     * separating the message into its constituent parts (text, HTML, attachments).
+     *
+     * @param bool $ignoreSignature Whether to ignore email signatures in parsing
+     *
+     * @return void
      */
     protected function parse(bool $ignoreSignature): void
     {
