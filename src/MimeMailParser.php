@@ -73,8 +73,6 @@ class MimeMailParser
 
         // Parse headers
         $this->_parsed['headers'] = $this->_parseHeaders($headerSection);
-        // Remove content-transfer-encoding from public headers
-        unset($this->_parsed['headers']['Content-Transfer-Encoding']);
 
         // Determine content type
         $contentType = $this->_parsed['headers']['content-type'] ?? 'text/plain';
@@ -210,13 +208,13 @@ class MimeMailParser
             if (preg_match('/^\s+/', $line)) {
                 // Continuation of previous header
                 if ($currentHeader) {
-                    $headers[strtolower($currentHeader)] .= ' ' . trim($line);
+                    $headers[$currentHeader] .= ' ' . trim($line);
                 }
             } else {
                 $parts = explode(':', $line, 2);
                 if (count($parts) == 2) {
-                    $currentHeader = $parts[0]; // Preserve original case
-                    $headers[strtolower($currentHeader)] = trim($parts[1]);
+                    $currentHeader = $parts[0]; // Original case
+                    $headers[$currentHeader] = trim($parts[1]);
                 }
             }
         }
@@ -253,11 +251,13 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary(?:--)?[\r\n]+/";
+        $pattern = "/--$boundary(?:--)?(?:\r?\n|\r|$)/";
         $parts = preg_split($pattern, $body);
         
         // Remove first empty part and last part after final boundary
-        array_shift($parts);
+        if (empty($parts[0])) {
+            array_shift($parts);
+        }
         array_pop($parts);
         
         return array_map('trim', array_filter($parts));
@@ -479,7 +479,12 @@ class MimeMailParser
      */
     public function getSubject(): ?string
     {
-        return $this->_parsed['headers']['Subject'] ?? $this->_parsed['headers']['subject'] ?? null;
+        foreach ($this->_parsed['headers'] as $key => $value) {
+            if (strtolower($key) === 'subject') {
+                return $value;
+            }
+        }
+        return null;
     }
 
     /**
