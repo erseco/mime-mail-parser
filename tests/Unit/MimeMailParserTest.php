@@ -109,7 +109,7 @@ Content-Type: text/html; charset="utf-8"
 ------=_Part_1_1234567890--
 EOF;
 
-    $message = new Message($messageString);
+    $message = new MimeMailParser($messageString);
 
     expect($message->getHeaders())->toBe([
         'From' => 'sender@example.com',

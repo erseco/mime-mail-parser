@@ -26,7 +26,7 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-class Message
+class MimeMailParser
 {
 
     private $_rawEmail;
@@ -42,12 +42,12 @@ class Message
      *
      * @param string $rawEmail The raw email content as a string.
      */
-    public static function fromString(string $rawEmail): self 
+    public static function fromString(string $rawEmail): MimeMailParser 
     {
         return new self($rawEmail);
     }
 
-    public static function fromFile(string $filename): self
+    public static function fromFile(string $filename): MimeMailParser
     {
         return new self(file_get_contents($filename));
     }
