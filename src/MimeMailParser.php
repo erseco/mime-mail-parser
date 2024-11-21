@@ -26,652 +26,373 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-class MimeMailParser
+class Message implements \JsonSerializable
 {
+    protected string $message;
 
-    private $_rawEmail;
-    private $_parsed = [
-        'headers' => [],
-        'headerKeys' => [], // Map lowercase keys to original case
-        'html' => '',
-        'text' => '',
-        'attachments' => []
-    ];
+    protected string $boundary;
+
+    protected array $headers = [];
 
     /**
-     * Initializes the class with raw email content.
-     *
-     * @param string $rawEmail The raw email content as a string.
+     * @var MessagePart[]
      */
-    public static function fromString(string $rawEmail): MimeMailParser 
+    protected array $parts = [];
+
+    public function __construct(string $message)
     {
-        return new self($rawEmail);
+        $this->message = $message;
+
+        $this->parse();
     }
 
-    public static function fromFile(string $filename): MimeMailParser
+    public static function fromString($message): self
     {
-        return new self(file_get_contents($filename));
+        return new self($message);
     }
 
-    public function __construct(string $rawEmail)
+    public static function fromFile($path): self
     {
-        $this->_rawEmail = $rawEmail;
-        $this->_parseEmail();
+        return new self(file_get_contents($path));
     }
 
-    /**
-     * Parses the raw email content.
-     */
-    /**
-     * Parses the raw email content.
-     *
-     * @return void
-     */
-    private function _parseEmail(): void
+    public function getBoundary(): string
     {
-        // Split headers and body
-        list($headerSection, $bodySection) = $this->_splitHeadersAndBody($this->_rawEmail);
-
-        // Parse headers
-        $this->_parsed['headers'] = $this->_parseHeaders($headerSection);
-
-        // Determine content type
-        $contentType = $this->_parsed['headers']['content-type'] ?? 'text/plain';
-
-        // Check for multipart content
-        if (strpos($contentType, 'multipart/') !== false) {
-            // Extract boundary
-            $boundary = $this->getBoundary();
-            if ($boundary) {
-                // Parse multipart content
-                $this->_parseMultipart($bodySection, $boundary, $contentType);
-            }
-        } else {
-            // Single part email
-            $encoding = $this->_getHeaderCaseInsensitive($this->_parsed['headers'], 'content-transfer-encoding') ?? '7bit';
-            $decodedContent = $this->_decodeContent($bodySection, $encoding);
-            $contentTypeLower = strtolower($contentType);
-
-            if (strpos($contentTypeLower, 'text/html') === 0) {
-                $this->_parsed['html'] = trim($decodedContent);
-            } elseif (strpos($contentTypeLower, 'text/plain') === 0) {
-                $this->_parsed['text'] = trim($decodedContent);
-            } else {
-                // Default to HTML if content-type matches neither
-                $this->_parsed['html'] = trim($decodedContent);
-            }
-        }
+        return $this->boundary;
     }
 
-    /**
-     * Parses multipart content recursively.
-     *
-     * @param string $body              The body content.
-     * @param string $boundary          The boundary string.
-     * @param string $parentContentType The content type of the parent part.
-     */
-    /**
-     * Parses multipart content recursively.
-     *
-     * @param string $body              The body content.
-     * @param string $boundary          The boundary string.
-     * @param string $parentContentType The content type of the parent part.
-     *
-     * @return void
-     */
-    private function _parseMultipart($body, $boundary, $parentContentType): void
+    public function getHeaders(): array
     {
-        $parts = $this->_splitBodyByBoundary($body, $boundary);
-        
-        foreach ($parts as $part) {
-            list($headerSection, $bodyContent) = $this->_splitHeadersAndBody($part);
-            $headers = $this->_parseHeaders($headerSection);
-            
-            $contentType = $this->_getHeaderCaseInsensitive($headers, 'content-type') ?? 'text/plain';
-            $encoding = $this->_getHeaderCaseInsensitive($headers, 'content-transfer-encoding') ?? '7bit';
-            $disposition = $this->_getHeaderCaseInsensitive($headers, 'content-disposition');
-
-            if (strpos(strtolower($contentType), 'multipart/') === 0) {
-                if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
-                    $this->_parseMultipart($bodyContent, $matches[1], $contentType);
-                }
-            } else {
-                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
-                
-                if (strpos(strtolower($contentType), 'text/html') === 0) {
-                    $this->_parsed['html'] = trim($decodedContent);
-                } elseif (strpos(strtolower($contentType), 'text/plain') === 0) {
-                    $this->_parsed['text'] = trim($decodedContent);
-                }
-                
-                if ($disposition && strpos(strtolower($disposition), 'attachment') !== false) {
-                    $filename = $this->_getFilename($headers);
-                    if ($filename) {
-                        $this->_parsed['attachments'][] = [
-                            'filename' => $filename,
-                            'content' => $decodedContent,
-                            'mimetype' => $contentType,
-                            'content-type' => $contentType,
-                            'headers' => $headers
-                        ];
-                    }
-                }
-            }
-        }
+        return $this->headers;
     }
 
-    /**
-     * Splits raw email into headers and body.
-     *
-     * @param string $rawEmail The raw email content.
-     *
-     * @return array  An array containing headers and body.
-     */
-    private function _splitHeadersAndBody(string $rawEmail): array
+    public function getHeader(string $header, $default = null): ?string
     {
-        // Find first occurrence of "From:" to start parsing
-        if (preg_match('/^.*?(From:.*)/ms', $rawEmail, $matches)) {
-            $emailContent = $matches[1];
-            $parts = preg_split("/\r?\n\r?\n/", $emailContent, 2);
-            return [
-                $parts[0] ?? '',
-                $parts[1] ?? ''
-            ];
-        }
-        return ['', ''];
-    }
+        $header = strtolower($header);
 
-    /**
-     * Parses email headers into an associative array.
-     *
-     * @param string $headerText The header section of the email.
-     *
-     * @return array  Associative array of headers.
-     */
-    private function _parseHeaders(string $headerText): array 
-    {
-        $headers = [];
-        $lines = preg_split("/\r?\n/", $headerText);
-        $currentHeader = '';
-        $currentValue = '';
-        
-        foreach ($lines as $line) {
-            if (preg_match('/^\s+(.+)$/', $line, $matches)) {
-                // Header continuation
-                if ($currentHeader) {
-                    $currentValue .= ' ' . trim($matches[1]);
-                    $headers[$currentHeader] = $currentValue;
-                }
-            } elseif (preg_match('/^(.*?):\s*(.*)$/', $line, $matches)) {
-                // New header
-                $currentHeader = $matches[1];
-                $currentValue = trim($matches[2]);
-                
-                // Store with original case
-                $headers[$currentHeader] = $currentValue;
-                
-                // Also store lowercase version for case-insensitive lookup
-                $this->_parsed['headerKeys'][strtolower($currentHeader)] = $currentHeader;
-            }
-        }
-
-        return $headers;
-    }
-
-    /**
-     * Extracts the boundary string from the Content-Type header stored in the headers array.
-     *
-     * @return string|null The boundary string or null if not found.
-     */
-    public function getBoundary(): ?string
-    {
-
-        if (isset( $this->_parsed['headers']['content-type'])) {
-
-            $contentType =  $this->_parsed['headers']['content-type'];
-            if (preg_match('/boundary="?([^";]+)"?/i', $contentType, $matches)) {
-                return $matches[1];
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Splits the body into parts using the boundary.
-     *
-     * @param string $body     The body of the email.
-     * @param string $boundary The boundary string.
-     *
-     * @return array  An array of body parts.
-     */
-    private function _splitBodyByBoundary(string $body, string $boundary): array
-    {
-        $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary\r?\n(.*?)(?=--$boundary(?:--)?(?:\r?\n|$)|$)/s";
-        preg_match_all($pattern, $body, $matches);
-        
-        $parts = [];
-        foreach ($matches[1] as $part) {
-            $trimmed = trim($part);
-            if (!empty($trimmed)) {
-                $parts[] = $trimmed;
-            }
-        }
-        return $parts;
-    }
-
-    /**
-     * Decodes content based on the encoding specified.
-     *
-     * @param string $content  The content to decode.
-     * @param string $encoding The encoding type.
-     *
-     * @return string  The decoded content.
-     */
-    private function _decodeContent(string $content, string $encoding): string
-    {
-        $encoding = strtolower($encoding);
-        switch ($encoding) {
-        case 'base64':
-            return base64_decode($content);
-        case 'quoted-printable':
-            return quoted_printable_decode($content);
-        case '7bit':
-        case '8bit':
-        default:
-            return $content;
-        }
-    }
-
-    /**
-     * Extracts the filename from the headers.
-     *
-     * @param array $headers The headers array.
-     *
-     * @return string|null  The filename or null if not found.
-     */
-    private function _getFilename(array $headers): ?string
-    {        
-        if (isset($headers['content-disposition'])) {
-            if (preg_match('/filename="?([^"]+)"?/i', $headers['content-disposition'], $matches)) {
-                return $matches[1];
-            }
-        }
-        if (isset($headers['content-type'])) {
-            if (preg_match('/name="?([^"]+)"?/i', $headers['content-type'], $matches)) {
-                return $matches[1];
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Generates a filename based on the content type.
-     *
-     * @param string $contentType The content type.
-     *
-     * @return string  A generated filename.
-     */
-    private function _generateFilename(string $contentType): string
-    {
-        $extension = explode('/', $contentType)[1] ?? 'dat';
-        return 'attachment_' . uniqid() . '.' . $extension;
-    }
-
-    /**
-     * Gets the headers of the email with preserved case.
-     *
-     * @return array The email headers with original case preserved
-     */
-    public function getHeaders(): array 
-    {
-        return $this->_parsed['headers'];
-    }
-
-    /**
-     * Gets a specific header value by name
-     * 
-     * @param string $name The header name (case-insensitive)
-     * 
-     * @return string|null The header value or null if not found
-     */
-    public function getHeader(string $name): ?string
-    {
-        foreach ($this->_parsed['headers'] as $key => $value) {
-            if (strtolower($key) === strtolower($name)) {
+        foreach ($this->headers as $key => $value) {
+            if (strtolower($key) === $header) {
                 return $value;
             }
         }
+
+        return $default;
+    }
+
+    public function getContentType(): string
+    {
+        return $this->getHeader('Content-Type', '');
+    }
+
+    public function getId(): string
+    {
+        $header = $this->getHeader('Message-ID', '');
+
+        return trim($header, '<>');
+    }
+
+    public function getSubject(): string
+    {
+        return $this->getHeader('Subject', '');
+    }
+
+    public function getFrom(): string
+    {
+        return $this->getHeader('From', '');
+    }
+
+    public function getTo(): string
+    {
+        return $this->getHeader('To', '');
+    }
+
+    public function getReplyTo(): string
+    {
+        return $this->getHeader('Reply-To', '');
+    }
+
+    public function getDate(): ?\DateTime
+    {
+        return \DateTime::createFromFormat(
+            'D, d M Y H:i:s O',
+            $this->getHeader('Date')
+        ) ?: null;
+    }
+
+    public function getParts(): array
+    {
+        return $this->parts;
+    }
+
+    public function getHtmlPart(): ?MessagePart
+    {
+        foreach ($this->parts as $part) {
+            if ($part->isHtml()) {
+                return $part;
+            }
+        }
+
+        return null;
+    }
+
+    public function getTextPart(): ?MessagePart
+    {
+        foreach ($this->parts as $part) {
+            if ($part->isText()) {
+                return $part;
+            }
+        }
+
         return null;
     }
 
     /**
-     * Gets the HTML part of the email.
-     *
-     * @return string|null The HTML content or null if not available.
-     */
-    public function getHtmlPart(): ?object
-    {
-        if (empty($this->_parsed['html'])) {
-            return null;
-        }
-
-        return new class($this->_parsed['html']) {
-            private $content;
-            
-            public function __construct($content) {
-                $this->content = $content;
-            }
-            
-            public function getContent() {
-                return $this->content;
-            }
-            
-            public function getHeaders() {
-                return [
-                    'Content-Type' => 'text/html; charset=utf-8',
-                    'Content-Transfer-Encoding' => 'quoted-printable',
-                ];
-            }
-        };
-    }
-
-    /**
-     * Gets the text part of the email.
-     *
-     * @return string|null The text content or null if not available.
-     */
-    public function getTextPart(): ?object
-    {
-        if (empty($this->_parsed['text'])) {
-            return null;
-        }
-
-        return new class($this->_parsed['text']) {
-            private $content;
-            
-            public function __construct($content) {
-                $this->content = $content;
-            }
-            
-            public function getContent() {
-                return $this->content;
-            }
-            
-            public function getHeaders() {
-                return [
-                    'Content-Type' => 'text/plain; charset=utf-8',
-                    'Content-Transfer-Encoding' => 'quoted-printable',
-                ];
-            }
-        };
-    }
-
-    /**
-     * Gets the email body, preferring HTML content over plain text
-     *
-     * @return string The email body content
-     */
-    public function getBody(): string
-    {
-        // Try to get HTML content first
-        $html_content = $this->getHtmlPart();
-        if (!empty($html_content)) {
-            return $html_content;
-        }
-
-        // Fall back to text content
-        $text_content = $this->getTextPart();
-        if (!empty($text_content)) {
-            return nl2br($text_content);
-        }
-
-        // If both are empty, return a default message
-        return '<p>No content provided in the email.</p>';
-    }
-
-
-    /**
-     * Gets the attachments from the email.
-     *
-     * @return array An array of attachments.
+     * @return MessagePart[]
      */
     public function getAttachments(): array
     {
-        return $this->_parsed['attachments'];
+        return array_values(array_filter($this->parts, fn ($part) => $part->isAttachment()));
     }
 
-
-    /**
-     * Retrieves the 'From' header from the parsed headers.
-     *
-     * @return string|null The 'From' header value or null if not found.
-     */
-    public function getFrom(): ?string 
+    public function getSize(): int
     {
-        return $this->getHeader('from');
+        return strlen($this->message);
     }
 
-    /**
-     * Retrieves the 'To' header from the parsed headers.
-     *
-     * @return string|null The 'To' header value or null if not found.
-     */
-    public function getTo(): ?string
+    public function toArray(): array
     {
-        return $this->getHeader('to');
+        return [
+            'id' => $this->getId(),
+            'subject' => $this->getSubject(),
+            'from' => $this->getFrom(),
+            'to' => $this->getTo(),
+            'reply_to' => $this->getReplyTo(),
+            'date' => $this->getDate() ? $this->getDate()->format('c') : null,
+            'headers' => $this->getHeaders(),
+            'parts' => array_map(fn ($part) => $part->toArray(), $this->getParts()),
+        ];
     }
 
-    /**
-     * Retrieves the 'To' header from the parsed headers.
-     *
-     * @return string|null The 'To' header value or null if not found.
-     */
-    public function getReplyTo(): ?string
+    public function jsonSerialize(): mixed
     {
-        return $this->getHeader('reply-to');
+        return $this->toArray();
     }
 
     /**
-     * Retrieves the 'Subject' header from the parsed headers.
-     *
-     * @return string|null The 'Subject' header value or null if not found.
+     * Parse the email message into headers and body parts.
      */
-    public function getSubject(): ?string
+    protected function parse(): void
     {
-        foreach ($this->_parsed['headers'] as $key => $value) {
-            if (strtolower($key) === 'subject') {
-                return $value;
+        $lines = explode("\n", $this->message);
+        $headerInProgress = null;
+
+        $collectingBody = false;
+        $currentBody = '';
+        $currentBodyHeaders = [];
+        $currentBodyHeaderInProgress = null;
+
+        foreach ($lines as $line) {
+            $line = rtrim($line, "\r\n ");
+
+            if ($headerInProgress) {
+                $this->headers[$headerInProgress] .= PHP_EOL . $line;
+                $headerInProgress = str_ends_with($this->headers[$headerInProgress], ';');
+                continue;
             }
-        }
-        return null;
-    }
 
-    /**
-     * Retrieves the 'Message-ID' header from the parsed headers.
-     *
-     * @return string|null The 'Message-ID' header value or null if not found.
-     */
-    public function getId(): ?string
-    {
-        foreach ($this->_parsed['headers'] as $key => $value) {
-            if (strtolower($key) === 'message-id') {
-                return trim($value, '<>');
+            if ($currentBodyHeaderInProgress) {
+                $currentBodyHeaders[$currentBodyHeaderInProgress] .= PHP_EOL . $line;
+                $currentBodyHeaderInProgress = str_ends_with($currentBodyHeaders[$currentBodyHeaderInProgress], ';');
+                continue;
             }
-        }
-        return null;
-    }
 
-    /**
-     * Retrieves the date as a DateTime object, if available.
-     *
-     * @return \DateTime|null The date object or null if not found.
-     */
-    public function getDate(): ?\DateTime
-    {
-        foreach ($this->_parsed['headers'] as $key => $value) {
-            if (strtolower($key) === 'date') {
-                try {
-                    return new \DateTime($value);
-                } catch (\Exception $e) {
-                    return null;
-                }
+            if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary.'--')) {
+                $line = str_replace('--'.$this->boundary.'--', '', $line);
+                $currentBody .= $line;
+                // We've reached the end of the message
+                break;
             }
-        }
-        return null;
-    }
 
-    /**
-     * Retrieves the 'Content-Type' header from the parsed headers.
-     *
-     * @return string|null The 'Content-Type' header value or null if not found.
-     */
-    public function getContentType(): ?string
-    {
-        return $this->getHeader('content-type');
-    }
+            if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary)) {
+                $line = str_replace('--'.$this->boundary, '', $line);
 
-    /**
-     * Retrieves all parts (HTML, text, attachments) from the email.
-     *
-     * @return array An array of parts.
-     */
-    public function getParts(): array
-    {
-        $parts = [];
-        if (!empty($this->_parsed['text'])) {
-            $contentType = $this->_parsed['headers']['content-type'] ?? '';
-            if (preg_match('/charset=["\']?([^"\'\s;]+)["\']?/i', $contentType, $matches)) {
-                $charset = $matches[1];
-                $textContentType = "text/plain; charset={$charset}";
-            } else {
-                $textContentType = 'text/plain; charset=utf-8';
+                if ($collectingBody) {
+                    // We've reached the end of a part, add it and reset the variables
+                    $this->addPart($currentBody . $line, $currentBodyHeaders);
+                }
+
+                $collectingBody = true;
+                $currentBody = '';
+                $currentBodyHeaders = [];
+                continue;
             }
-            
-            $textPart = new class($this->_parsed['text'], $textContentType) {
-                private $content;
-                private $contentType;
-                
-                public function __construct($content, $contentType) {
-                    $this->content = $content;
-                    $this->contentType = $contentType;
+
+            if ($collectingBody && preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
+                $currentBodyHeaders[$matches['key']] = $matches['value'];
+
+                // if the last character is a semicolon, then the header is continued on the next line
+                if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
+                    $currentBodyHeaderInProgress = $matches['key'];
                 }
-                
-                public function getContent() {
-                    return $this->content;
-                }
-                
-                public function getContentType() {
-                    return $this->contentType;
-                }
-                
-                public function getHeaders() {
-                    return [
-                        'Content-Type' => $this->contentType,
-                        'Content-Transfer-Encoding' => 'quoted-printable',
+
+                continue;
+            }
+
+            if ($collectingBody) {
+                $currentBody .= $line . PHP_EOL;
+                continue;
+            }
+
+            if (preg_match("/^Content-Type: (?<contenttype>multipart\/.*); boundary=(?<boundary>.*)$/", $line, $matches)) {
+                $this->headers['Content-Type'] = $matches['contenttype']."; boundary=".$matches['boundary'];
+                $this->boundary = trim($matches['boundary'], '"');
+                continue;
+            }
+
+            if (preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
+                if (strtolower($matches['key']) === 'content-type' && !isset($this->boundary) && !str_contains($matches['value'], 'multipart/mixed')) {
+                    // this might be a single-part message. Let's start collecting the body.
+                    $collectingBody = true;
+                    $currentBody = '';
+                    $currentBodyHeaders = [
+                        $matches['key'] => $matches['value'],
                     ];
+
+                    if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
+                        $currentBodyHeaderInProgress = $matches['key'];
+                    }
+
+                    continue;
                 }
-                
-                public function isHtml() {
-                    return false;
+
+                $this->headers[$matches['key']] = $matches['value'];
+
+                // if the last character is a semicolon, then the header is continued on the next line
+                if (str_ends_with($this->headers[$matches['key']], ';')) {
+                    $headerInProgress = $matches['key'];
                 }
-                
-                public function isAttachment() {
-                    return false;
-                }
-            };
-            $parts[] = $textPart;
-        }
-        if (!empty($this->_parsed['html'])) {
-            $contentType = $this->_parsed['headers']['content-type'] ?? '';
-            if (preg_match('/charset=["\']?([^"\'\s;]+)["\']?/i', $contentType, $matches)) {
-                $charset = $matches[1];
-                $htmlContentType = "text/html; charset={$charset}";
-            } else {
-                $htmlContentType = 'text/html; charset=utf-8';
+
+                continue;
             }
-            
-            $htmlPart = new class($this->_parsed['html'], $htmlContentType) {
-                private $content;
-                private $contentType;
-                
-                public function __construct($content, $contentType) {
-                    $this->content = $content;
-                    $this->contentType = $contentType;
-                }
-                
-                public function getContent() {
-                    return $this->content;
-                }
-                
-                public function getContentType() {
-                    return $this->contentType;
-                }
-                
-                public function getHeaders() {
-                    return [
-                        'Content-Type' => $this->contentType,
-                        'Content-Transfer-Encoding' => 'quoted-printable',
-                    ];
-                }
-                
-                public function isHtml() {
-                    return true;
-                }
-                
-                public function isAttachment() {
-                    return false;
-                }
-            };
-            $parts[] = $htmlPart;
+
+            if (preg_match("~^--(?<boundary>[0-9A-Za-z'()+_,-./:=?]{0,68}[0-9A-Za-z'()+_,-./=?])~", $line, $matches)) {
+                $this->boundary = trim($matches['boundary']);
+                $collectingBody = true;
+                $currentBody = '';
+                $currentBodyHeaders = [];
+                continue;
+            }
+
+            // The line is not part of the email message. Let's remove it altogether.
+            $this->message = ltrim(substr($this->message, strlen($line)));
         }
-        foreach ($this->_parsed['attachments'] as $attachment) {
-            $attachmentPart = new class($attachment) {
-                private $attachment;
-                
-                public function __construct($attachment) {
-                    $this->attachment = $attachment;
-                }
-                
-                public function getContent() {
-                    return $this->attachment['content'];
-                }
-                
-                public function getContentType() {
-                    return $this->attachment['mimetype'];
-                }
-                
-                public function getFilename() {
-                    return $this->attachment['filename'];
-                }
-                
-                public function getHeaders() {
-                    return $this->attachment['headers'];
-                }
-                
-                public function isHtml() {
-                    return false;
-                }
-                
-                public function isAttachment() {
-                    return true;
-                }
-            };
-            $parts[] = $attachmentPart;
+
+        if (!empty($currentBody) || !empty($currentBodyHeaders)) {
+            $this->addPart($currentBody, $currentBodyHeaders);
         }
-        return $parts;
+
+        if (! $this->getContentType() && ($part = $this->getParts()[0] ?? null)) {
+            foreach ($part->getHeaders() as $key => $value) {
+                if (strtolower($key) === 'content-type') {
+                    $this->headers[$key] = $value;
+                    break;
+                }
+            }
+        }
     }
 
-
-    private function _getHeaderCaseInsensitive(array $headers, string $name): ?string
+    protected function addPart(string $currentBody, array $currentBodyHeaders): void
     {
-        $nameLower = strtolower($name);
-        foreach ($headers as $key => $value) {
-            if (strtolower($key) === $nameLower) {
-                return $value;
-            }
+        $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
+    }
+}
+
+class MessagePart implements \JsonSerializable
+{
+    protected string $content;
+
+    protected array $headers;
+
+    public function __construct(string $content, array $headers = [])
+    {
+        $this->content = $content;
+        $this->headers = $headers;
+    }
+
+    public function getContentType(): string
+    {
+        return $this->headers['Content-Type'] ?? '';
+    }
+
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
+
+    public function getHeader(string $name, $default = null): mixed
+    {
+        return $this->headers[$name] ?? $default;
+    }
+
+    public function getContent(): string
+    {
+        if (strtolower($this->getHeader('Content-Transfer-Encoding', '')) === 'base64') {
+            return base64_decode($this->content);
         }
-        return null;
+
+        return $this->content;
+    }
+
+    public function isHtml(): bool
+    {
+        return str_starts_with(strtolower($this->getContentType()), 'text/html');
+    }
+
+    public function isText(): bool
+    {
+        return str_starts_with(strtolower($this->getContentType()), 'text/plain');
+    }
+
+    public function isImage(): bool
+    {
+        return str_starts_with(strtolower($this->getContentType()), 'image/');
+    }
+
+    public function isAttachment(): bool
+    {
+        return str_starts_with($this->getHeader('Content-Disposition', ''), 'attachment');
+    }
+
+    public function getFilename(): string
+    {
+        if (preg_match('/filename=([^;]+)/', $this->getHeader('Content-Disposition'), $matches)) {
+            return trim($matches[1], '"');
+        }
+
+        if (preg_match('/name=([^;]+)/', $this->getContentType(), $matches)) {
+            return trim($matches[1], '"');
+        }
+
+        return '';
+    }
+
+    public function getSize(): int
+    {
+        return strlen($this->getContent());
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'headers' => $this->getHeaders(),
+            'content' => $this->getContent(),
+            'filename' => $this->getFilename(),
+            'size' => $this->getSize(),
+        ];
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return $this->toArray();
     }
 }
