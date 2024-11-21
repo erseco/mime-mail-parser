@@ -132,16 +132,14 @@ class MimeMailParser
                     $this->_parseMultipart($bodyContent, $matches[1], $contentType);
                 }
             } else {
-                $decodedContent = trim($this->_decodeContent($bodyContent, $encoding));
+                $decodedContent = $this->_decodeContent($bodyContent, $encoding);
                 
-                $contentTypeLower = strtolower($contentType);
-                if (strpos($contentTypeLower, 'text/html') === 0) {
-                    $this->_parsed['html'] = $decodedContent;
-                } elseif (strpos($contentTypeLower, 'text/plain') === 0) {
-                    $this->_parsed['text'] = $decodedContent;
+                if (strpos(strtolower($contentType), 'text/html') === 0) {
+                    $this->_parsed['html'] = trim($decodedContent);
+                } elseif (strpos(strtolower($contentType), 'text/plain') === 0) {
+                    $this->_parsed['text'] = trim($decodedContent);
                 }
                 
-                // Handle attachments
                 if ($disposition && strpos(strtolower($disposition), 'attachment') !== false) {
                     $filename = $this->_getFilename($headers);
                     if ($filename) {
@@ -186,7 +184,7 @@ class MimeMailParser
      *
      * @return array  Associative array of headers.
      */
-    private function _parseHeaders(string $headerText): array 
+    private function _parseHeaders(string $headerText): array
     {
         $headers = [];
         $lines = preg_split("/\r?\n/", $headerText);
@@ -194,25 +192,20 @@ class MimeMailParser
         $currentValue = '';
         
         foreach ($lines as $line) {
-            // Handle header continuation
             if (preg_match('/^\s+(.+)$/', $line, $matches)) {
+                // Header continuation
                 if ($currentHeader) {
                     $currentValue .= ' ' . trim($matches[1]);
                     $headers[$currentHeader] = $currentValue;
+                    $headers[strtolower($currentHeader)] = $currentValue;
                 }
-            } else {
+            } elseif (preg_match('/^(.*?):\s*(.*)$/', $line, $matches)) {
                 // New header
-                if (preg_match('/^(.*?):\s*(.*)$/', $line, $matches)) {
-                    $currentHeader = $matches[1];
-                    $currentValue = trim($matches[2]);
-                    $headers[$currentHeader] = $currentValue;
-                }
+                $currentHeader = $matches[1];
+                $currentValue = trim($matches[2]);
+                $headers[$currentHeader] = $currentValue;
+                $headers[strtolower($currentHeader)] = $currentValue;
             }
-        }
-        
-        // Store lowercase versions for case-insensitive lookup
-        foreach ($headers as $key => $value) {
-            $headers[strtolower($key)] = $value;
         }
 
         return $headers;
@@ -247,11 +240,17 @@ class MimeMailParser
     private function _splitBodyByBoundary(string $body, string $boundary): array
     {
         $boundary = preg_quote($boundary, '/');
-        $pattern = "/--$boundary\r?\n(.*?)(?=--$boundary(?:--)?(\r?\n|$))/s";
+        $pattern = "/--$boundary\r?\n(.*?)(?=--$boundary(?:--)?(?:\r?\n|$))/s";
         preg_match_all($pattern, $body, $matches);
         
-        $parts = array_map('trim', $matches[1]);
-        return array_filter($parts); // Remove empty parts
+        $parts = [];
+        foreach ($matches[1] as $part) {
+            $trimmed = trim($part);
+            if (!empty($trimmed)) {
+                $parts[] = $trimmed;
+            }
+        }
+        return $parts;
     }
 
     /**
