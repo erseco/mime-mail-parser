@@ -26,7 +26,7 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-class MimeMailParser
+class Message
 {
 
     private $_rawEmail;
@@ -42,7 +42,17 @@ class MimeMailParser
      *
      * @param string $rawEmail The raw email content as a string.
      */
-    public function __construct(string $rawEmail)
+    public static function fromString(string $rawEmail): self 
+    {
+        return new self($rawEmail);
+    }
+
+    public static function fromFile(string $filename): self
+    {
+        return new self(file_get_contents($filename));
+    }
+
+    private function __construct(string $rawEmail)
     {
         $this->_rawEmail = $rawEmail;
         $this->_parseEmail();
@@ -338,9 +348,19 @@ class MimeMailParser
      *
      * @return string|null The HTML content or null if not available.
      */
-    public function getHtmlPart(): ?string
+    public function getHtmlPart(): ?object
     {
-        return !empty($this->_parsed['html']) ? $this->_parsed['html'] : null;
+        if (empty($this->_parsed['html'])) {
+            return null;
+        }
+
+        return (object)[
+            'getContent' => fn() => $this->_parsed['html'],
+            'getHeaders' => fn() => [
+                'Content-Type' => 'text/html; charset=utf-8',
+                'Content-Transfer-Encoding' => 'quoted-printable',
+            ]
+        ];
     }
 
     /**
@@ -348,9 +368,19 @@ class MimeMailParser
      *
      * @return string|null The text content or null if not available.
      */
-    public function getTextPart(): ?string
+    public function getTextPart(): ?object
     {
-        return !empty($this->_parsed['text']) ? $this->_parsed['text'] : null;
+        if (empty($this->_parsed['text'])) {
+            return null;
+        }
+
+        return (object)[
+            'getContent' => fn() => $this->_parsed['text'],
+            'getHeaders' => fn() => [
+                'Content-Type' => 'text/plain; charset=utf-8',
+                'Content-Transfer-Encoding' => 'quoted-printable',
+            ]
+        ];
     }
 
     /**
@@ -480,11 +510,14 @@ class MimeMailParser
             }
             
             $parts[] = (object) [
-                'contentType' => $textContentType,
-                'content' => $this->_parsed['text'],
-                'headers' => $this->_parsed['headers'],
-                'isHtml' => false,
-                'isAttachment' => false
+                'getContentType' => fn() => $textContentType,
+                'getContent' => fn() => $this->_parsed['text'],
+                'getHeaders' => fn() => [
+                    'Content-Type' => $textContentType,
+                    'Content-Transfer-Encoding' => 'quoted-printable',
+                ],
+                'isHtml' => fn() => false,
+                'isAttachment' => fn() => false
             ];
         }
         if (!empty($this->_parsed['html'])) {
@@ -497,20 +530,24 @@ class MimeMailParser
             }
             
             $parts[] = (object) [
-                'contentType' => $htmlContentType,
-                'content' => $this->_parsed['html'],
-                'headers' => $this->_parsed['headers'],
-                'isHtml' => true,
-                'isAttachment' => false
+                'getContentType' => fn() => $htmlContentType,
+                'getContent' => fn() => $this->_parsed['html'],
+                'getHeaders' => fn() => [
+                    'Content-Type' => $htmlContentType,
+                    'Content-Transfer-Encoding' => 'quoted-printable',
+                ],
+                'isHtml' => fn() => true,
+                'isAttachment' => fn() => false
             ];
         }
         foreach ($this->_parsed['attachments'] as $attachment) {
             $parts[] = (object) [
-                'contentType' => $attachment['mimetype'],
-                'content' => $attachment['content'],
-                'filename' => $attachment['filename'],
-                'headers' => $attachment['headers'],
-                'isAttachment' => true
+                'getContentType' => fn() => $attachment['mimetype'],
+                'getContent' => fn() => $attachment['content'],
+                'getFilename' => fn() => $attachment['filename'],
+                'getHeaders' => fn() => $attachment['headers'],
+                'isHtml' => fn() => false,
+                'isAttachment' => fn() => true
             ];
         }
         return $parts;
