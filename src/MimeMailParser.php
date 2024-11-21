@@ -328,13 +328,18 @@ class MimeMailParser
     }
 
     /**
-     * Gets the headers of the email.
+     * Gets the headers of the email with preserved case.
      *
-     * @return array The email headers.
+     * @return array The email headers with original case preserved
      */
     public function getHeaders(): array
     {
-        return $this->_parsed['headers'];
+        $headers = [];
+        foreach ($this->_parsed['headers'] as $key => $value) {
+            $originalKey = $this->_parsed['headerKeys'][$key] ?? $key;
+            $headers[$originalKey] = $value;
+        }
+        return $headers;
     }
 
     /**
@@ -348,16 +353,6 @@ class MimeMailParser
     {
         $key = strtolower($name);
         return $this->_parsed['headers'][$key] ?? null;
-    }
-
-    public function getHeaders(): array
-    {
-        $headers = [];
-        foreach ($this->_parsed['headers'] as $key => $value) {
-            $originalKey = $this->_parsed['headerKeys'][$key] ?? $key;
-            $headers[$key] = $value;
-        }
-        return $headers;
     }
 
     /**
