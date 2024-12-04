@@ -7,7 +7,7 @@ use Erseco\Message;
 test('can parse a zimbra message', function () {
     $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_zimbra.eml');
 
-    expect($message->getFrom())->toBe('Zimbra User <user@example.com>')
+    expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
         ->and($message->getTo())->toBe('receiver@example.com')
         ->and($message->getSubject())->toBe('Test Email')
         ->and($message->getContentType())->toContain('multipart/alternative');
