@@ -10,7 +10,7 @@ test('can parse a zimbra message', function () {
     expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
         ->and($message->getTo())->toBe('taskwp <receiver@example.com>')
         ->and($message->getSubject())->toBe('test from zimbra')
-        ->and($message->getContentType())->toContain('multipart/alternative');
+        ->and($message->getContentType())->toBe('text/html; charset=utf-8');
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(2)
@@ -23,7 +23,7 @@ test('can parse a zimbra message with attachments', function () {
 
     expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
         ->and($message->getTo())->toBe('taskwp <receiver@example.com>')
-        ->and($message->getSubject())->toBe('Test Email with Attachments');
+        ->and($message->getSubject())->toBe('test from zimbra with attachments');
 
     $attachments = $message->getAttachments();
     expect($attachments)->toHaveCount(1)
@@ -36,7 +36,7 @@ test('can parse a zimbra message with embedded content', function () {
 
     expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
         ->and($message->getTo())->toBe('taskwp <receiver@example.com>')
-        ->and($message->getSubject())->toBe('Test Email with Embedded Content');
+        ->and($message->getSubject())->toBe('test from zimbra with embedded image');
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(3)

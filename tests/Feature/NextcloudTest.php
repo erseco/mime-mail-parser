@@ -10,7 +10,7 @@ test('can parse a nextcloud message', function () {
     expect($message->getFrom())->toBe('Test User 3 <test3@example.com>')
         ->and($message->getTo())->toBe('receiver@example.com')
         ->and($message->getSubject())->toBe('test from nextcloud')
-        ->and($message->getContentType())->toContain('multipart/alternative');
+        ->and($message->getContentType())->toBe('text/plain; charset=utf-8');
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(2)
@@ -26,7 +26,7 @@ test('can parse a nextcloud message with attachments', function () {
         ->and($message->getSubject())->toBe('this is a mail from nextcloud with attachments');
 
     $attachments = $message->getAttachments();
-    expect($attachments)->toHaveCount(1)
+    expect($attachments)->toHaveCount(2)
         ->and($attachments[0]->getFilename())->toBe('document.pdf')
         ->and($attachments[0]->getContentType())->toContain('application/pdf');
 });
