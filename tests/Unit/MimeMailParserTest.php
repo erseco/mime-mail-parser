@@ -144,7 +144,8 @@ EOF;
             ->and($parts[0]->getContentType())->toBe('text/plain; charset="utf-8"')
             ->and($parts[0]->getContent())->toBe('This is the text version of the email.')
             ->and($parts[1]->getContentType())->toBe('text/html; charset="utf-8"')
-            ->and($parts[1]->getContent())->toBe(<<<EOF
+            ->and($parts[1]->getContent())->toBe(
+                <<<EOF
 <html>
 <head>
 <title>This is an HTML email</title>
@@ -153,7 +154,8 @@ EOF;
 <h1>This is the HTML version of the email</h1>
 </body>
 </html>
-EOF);
+EOF
+            );
 
     }
 );
@@ -220,10 +222,12 @@ it(
                 'Content-Type' => 'text/html; charset=utf-8',
                 'Content-Transfer-Encoding' => 'quoted-printable',
                 ]
-            )->and($message->getTextPart()?->getContent())->toBe(<<<EOF
+            )->and($message->getTextPart()?->getContent())->toBe(
+                <<<EOF
 Hi John,
 This is a confirmation of your appointment.
-EOF);
+EOF
+            );
 
     }
 );
@@ -313,7 +317,8 @@ EOF;
         $message = Message::fromString($messageString);
 
         expect($message->getFrom())->toBe('sender@example.com')
-        ->and($message->getHtmlPart()?->getContent())->toBe(<<<EOF
+        ->and($message->getHtmlPart()?->getContent())->toBe(
+            <<<EOF
 <html>
 <head>
 <title>This is an HTML email</title>
@@ -322,7 +327,8 @@ EOF;
 <h1>This is the HTML version of the email</h1>
 </body>
 </html>
-EOF);
+EOF
+        );
     }
 );
 
@@ -444,9 +450,11 @@ it(
                 'Content-Transfer-Encoding' => 'base64',
                 // 'Content-Transfer-Encoding' => 'quoted-printable',
                 ]
-            )->and($message->getTextPart()?->getContent())->toBe(<<<EOF
+            )->and($message->getTextPart()?->getContent())->toBe(
+                <<<EOF
 test
-EOF);
+EOF
+            );
 
     }
 );

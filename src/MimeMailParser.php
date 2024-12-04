@@ -319,7 +319,14 @@ class Message implements \JsonSerializable
             $line = rtrim($line, "\r\n ");
 
             if ($headerInProgress) {
+
+                // Initialize the header if it's not set
+                if (!isset($this->headers[$headerInProgress])) {
+                    $this->headers[$headerInProgress] = '';
+                }
+
                 $this->headers[$headerInProgress] .= PHP_EOL . $line;
+           
                 $headerInProgress = str_ends_with($this->headers[$headerInProgress], ';');
                 continue;
             }
