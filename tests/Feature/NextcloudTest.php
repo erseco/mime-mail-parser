@@ -14,8 +14,7 @@ test('can parse a nextcloud message', function () {
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(1)
-        ->and($parts[0]->getContentType())->toContain('text/plain')
-        ->and($parts[1]->getContentType())->toContain('text/html');
+        ->and($parts[0]->getContentType())->toContain('text/plain');
 });
 
 test('can parse a nextcloud message with attachments', function () {

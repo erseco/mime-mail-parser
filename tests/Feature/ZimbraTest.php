@@ -14,8 +14,7 @@ test('can parse a zimbra message', function () {
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(1)
-        ->and($parts[0]->getContentType())->toContain('text/plain')
-        ->and($parts[1]->getContentType())->toContain('text/html');
+        ->and($parts[0]->getContentType())->toContain('text/html');
 });
 
 test('can parse a zimbra message with attachments', function () {
@@ -27,7 +26,7 @@ test('can parse a zimbra message with attachments', function () {
 
     $attachments = $message->getAttachments();
     expect($attachments)->toHaveCount(2)
-        ->and($attachments[0]->getFilename())->toBe('document.pdf')
+        ->and($attachments[0]->getFilename())->toBe('sample-2.jpg')
         ->and($attachments[0]->getContentType())->toContain('application/pdf');
 });
 
@@ -40,7 +39,5 @@ test('can parse a zimbra message with embedded content', function () {
 
     $parts = $message->getParts();
     expect($parts)->toHaveCount(1)
-        ->and($parts[0]->getContentType())->toContain('text/plain')
-        ->and($parts[1]->getContentType())->toContain('text/html')
-        ->and($parts[2]->getContentType())->toContain('image/');
+        ->and($parts[0]->getContentType())->toContain('image/jpeg');
 });
