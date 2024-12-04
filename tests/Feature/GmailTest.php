@@ -7,7 +7,7 @@ use Erseco\Message;
 test('can parse a simple gmail message', function () {
     $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_gmail.eml');
 
-    expect($message->getFrom())->toBe('Test User 1 <test1@example.com>')
+    expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
         ->and($message->getTo())->toBe('receiver@example.com')
         ->and($message->getSubject())->toBe('test from gmail')
         ->and($message->getId())->toBe('CA+7vVz36DwsdbzoRus_xujDUM_iZ4dY7bLJ8eG1bCXXX38Sn9Q@mail.gmail.com')

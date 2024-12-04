@@ -7,7 +7,7 @@ use Erseco\Message;
 test('can parse a nextcloud message', function () {
     $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_nextcloud.eml');
 
-    expect($message->getFrom())->toBe('Nextcloud <no-reply@example.com>')
+    expect($message->getFrom())->toBe('Test User 3 <test3@example.com>')
         ->and($message->getTo())->toBe('receiver@example.com')
         ->and($message->getSubject())->toBe('Test Subject')
         ->and($message->getContentType())->toContain('multipart/alternative');
@@ -21,7 +21,7 @@ test('can parse a nextcloud message', function () {
 test('can parse a nextcloud message with attachments', function () {
     $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_nextcloud_attachments.eml');
 
-    expect($message->getFrom())->toBe('Nextcloud <no-reply@example.com>')
+    expect($message->getFrom())->toBe('Test User 3 <test3@example.com>')
         ->and($message->getTo())->toBe('receiver@example.com')
         ->and($message->getSubject())->toBe('Test Subject with Attachments');
 
