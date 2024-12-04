@@ -27,7 +27,7 @@ test('can parse a zimbra message with attachments', function () {
     $attachments = $message->getAttachments();
     expect($attachments)->toHaveCount(2)
         ->and($attachments[0]->getFilename())->toBe('sample-2.jpg')
-        ->and($attachments[0]->getContentType())->toContain('application/pdf');
+        ->and($attachments[0]->getContentType())->toContain('image/jpeg');
 });
 
 test('can parse a zimbra message with embedded content', function () {
