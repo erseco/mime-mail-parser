@@ -291,6 +291,11 @@ class Message implements \JsonSerializable
      *
      * @return array Array representation of the message part
      */
+    /**
+     * Convert the message part to an array representation
+     *
+     * @return array Array containing message part data including headers, content, filename and size
+     */
     public function toArray(): array
     {
         return [
@@ -309,6 +314,11 @@ class Message implements \JsonSerializable
      * Specify data which should be serialized to JSON
      *
      * @return array<string, mixed> Data to be JSON serialized
+     */
+    /**
+     * Specify data which should be serialized to JSON
+     *
+     * @return mixed Data to be JSON serialized
      */
     /**
      * Specify data which should be serialized to JSON
