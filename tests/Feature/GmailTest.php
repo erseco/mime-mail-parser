@@ -1,5 +1,13 @@
 <?php
-
+/**
+ * Gmail tests for MimeMailParser class
+ *
+ * @category Tests
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
+ */
 namespace Tests\Feature;
 
 use Erseco\Message;

@@ -3,8 +3,6 @@
 /**
  * MimeMailParser.php
  *
- * PHP Version 8.1
- *
  * @category Library
  * @package  MimeMailParser
  * @author   Ernesto Serrano <info@ernesto.es>
@@ -26,18 +24,6 @@ namespace Erseco;
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-/**
- * Message class for handling email message parsing
- *
- * This class provides functionality to parse and extract information from email messages,
- * including headers, body parts, and attachments.
- *
- * @category Library
- * @package  MimeMailParser
- * @author   Ernesto Serrano <info@ernesto.es>
- * @license  MIT https://opensource.org/licenses/MIT
- * @link     https://github.com/erseco/mime-mail-parser
- */
 class Message implements \JsonSerializable
 {
     protected string $message;
@@ -46,9 +32,6 @@ class Message implements \JsonSerializable
 
     protected array $headers = [];
 
-    /**
-     * @var MessagePart[]
-     */
     protected array $parts = [];
 
     /**
@@ -105,11 +88,6 @@ class Message implements \JsonSerializable
      *
      * @return array<string, string> Array of headers with key-value pairs
      */
-    /**
-     * Get all headers for this message part
-     *
-     * @return array Array of headers
-     */
     public function getHeaders(): array
     {
         return $this->headers;
@@ -140,11 +118,6 @@ class Message implements \JsonSerializable
      * Get the Content-Type header of the email message
      *
      * @return string The content type or empty string if not found
-     */
-    /**
-     * Get the content type of this message part
-     *
-     * @return string The content type or empty string if not set
      */
     public function getContentType(): string
     {
@@ -259,6 +232,8 @@ class Message implements \JsonSerializable
     }
 
     /**
+     *  Get the attachments of a message
+     * 
      * @return MessagePart[]
      */
     public function getAttachments(): array
@@ -271,16 +246,6 @@ class Message implements \JsonSerializable
      *
      * @return int Size of the message in bytes
      */
-    /**
-     * Get the size of the content in bytes
-     *
-     * @return int Size in bytes
-     */
-    /**
-     * Get the size of the content in bytes
-     *
-     * @return int Size in bytes
-     */
     public function getSize(): int
     {
         return strlen($this->message);
@@ -290,21 +255,6 @@ class Message implements \JsonSerializable
      * Convert the message to an array representation
      *
      * @return array<string, mixed> Array containing message data
-     */
-    /**
-     * Convert the message part to an array
-     *
-     * @return array Array representation of the message part
-     */
-    /**
-     * Convert the message part to an array representation
-     *
-     * @return array Array containing message part data including headers, content, filename and size
-     */
-    /**
-     * Convert the message part to an array representation
-     *
-     * @return array Array containing message part data including headers, content, filename, and size
      */
     public function toArray(): array
     {
@@ -320,26 +270,6 @@ class Message implements \JsonSerializable
         ];
     }
 
-    /**
-     * Specify data which should be serialized to JSON
-     *
-     * @return array<string, mixed> Data to be JSON serialized
-     */
-    /**
-     * Specify data which should be serialized to JSON
-     *
-     * @return mixed Data to be JSON serialized
-     */
-    /**
-     * Specify data which should be serialized to JSON
-     *
-     * @return mixed Data to be JSON serialized
-     */
-    /**
-     * Specify data which should be serialized to JSON
-     * 
-     * @return array Array containing message part data including headers, content, filename and size
-     */
     /**
      * Specify data which should be serialized to JSON
      *
@@ -531,11 +461,21 @@ class MessagePart implements \JsonSerializable
         $this->headers = $headers;
     }
 
+    /**
+     * Get the content type of this message part
+     *
+     * @return string The content type or empty string if not set
+     */
     public function getContentType(): string
     {
         return $this->headers['Content-Type'] ?? '';
     }
 
+    /**
+     * Get all headers for this message part
+     *
+     * @return array Array of headers
+     */
     public function getHeaders(): array
     {
         return $this->headers;
@@ -626,11 +566,21 @@ class MessagePart implements \JsonSerializable
         return '';
     }
 
+    /**
+     * Get the size of the content in bytes
+     *
+     * @return int Size in bytes
+     */
     public function getSize(): int
     {
         return strlen($this->getContent());
     }
 
+    /**
+     * Convert the message part to an array representation
+     *
+     * @return array Array containing message part data including headers, content, filename, and size
+     */
     public function toArray(): array
     {
         return [
@@ -641,6 +591,11 @@ class MessagePart implements \JsonSerializable
         ];
     }
 
+    /**
+     * Specify data which should be serialized to JSON
+     *
+     * @return array Array containing message part data
+     */
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
