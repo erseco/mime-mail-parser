@@ -325,6 +325,11 @@ class Message implements \JsonSerializable
      *
      * @return mixed Data to be JSON serialized
      */
+    /**
+     * Specify data which should be serialized to JSON
+     * 
+     * @return array Array containing message part data including headers, content, filename and size
+     */
     public function jsonSerialize(): mixed
     {
         return $this->toArray();
