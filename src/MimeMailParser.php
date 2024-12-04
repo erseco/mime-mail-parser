@@ -303,37 +303,37 @@ class Message implements \JsonSerializable
         foreach ($lines as $line) {
             $line = rtrim($line, "\r\n ");
 
+            // Handle continued headers
             if ($headerInProgress) {
-
-                // Initialize the header if it's not set
                 if (!isset($this->headers[$headerInProgress])) {
                     $this->headers[$headerInProgress] = '';
                 }
-
                 $this->headers[$headerInProgress] .= PHP_EOL . $line;
            
                 $headerInProgress = str_ends_with($this->headers[$headerInProgress], ';');
                 continue;
             }
 
+            // Handle continued body headers
             if ($currentBodyHeaderInProgress) {
                 $currentBodyHeaders[$currentBodyHeaderInProgress] .= PHP_EOL . $line;
                 $currentBodyHeaderInProgress = str_ends_with($currentBodyHeaders[$currentBodyHeaderInProgress], ';');
                 continue;
             }
 
+            // Check for multipart boundary end
             if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary.'--')) {
                 $line = str_replace('--'.$this->boundary.'--', '', $line);
                 $currentBody .= $line;
-                // We've reached the end of the message
                 break;
             }
 
+            // Check for multipart boundary
             if (isset($this->boundary) && str_ends_with($line, '--'.$this->boundary)) {
                 $line = str_replace('--'.$this->boundary, '', $line);
 
+                // Add the previous part before starting a new one
                 if ($collectingBody) {
-                    // We've reached the end of a part, add it and reset the variables
                     $this->addPart($currentBody . $line, $currentBodyHeaders);
                 }
 
@@ -343,10 +343,11 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Collect body headers
             if ($collectingBody && preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
                 $currentBodyHeaders[$matches['key']] = $matches['value'];
 
-                // if the last character is a semicolon, then the header is continued on the next line
+                // Check for continued headers
                 if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
                     $currentBodyHeaderInProgress = $matches['key'];
                 }
@@ -354,24 +355,40 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Collect body content
             if ($collectingBody) {
+                // Special handling for boundary close line
+                if (isset($this->boundary) && str_contains($line, '--'.$this->boundary)) {
+                    $parts = explode('--'.$this->boundary, $line);
+                    $currentBody .= $parts[0];
+                
+                    // Add part and prepare for next
+                    $this->addPart($currentBody, $currentBodyHeaders);
+                    $currentBody = '';
+                    $currentBodyHeaders = [];
+                    $collectingBody = true;
+                    continue;
+                }
+            
                 $currentBody .= $line . PHP_EOL;
                 continue;
             }
 
+            // Detect multipart content type with boundary
             if (preg_match("/^Content-Type: (?<contenttype>multipart\/.*); boundary=(?<boundary>.*)$/", $line, $matches)) {
                 $this->headers['Content-Type'] = $matches['contenttype']."; boundary=".$matches['boundary'];
                 $this->boundary = trim($matches['boundary'], '"');
                 continue;
             }
 
+            // Collect message headers
             if (preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
+                // Special handling for single-part messages or non-multipart content types
                 if (strtolower($matches['key']) === 'content-type' && !isset($this->boundary) && !str_contains($matches['value'], 'multipart/mixed')) {
-                    // this might be a single-part message. Let's start collecting the body.
                     $collectingBody = true;
                     $currentBody = '';
                     $currentBodyHeaders = [
-                        $matches['key'] => $matches['value'],
+                    $matches['key'] => $matches['value'],
                     ];
 
                     if (str_ends_with($currentBodyHeaders[$matches['key']], ';')) {
@@ -383,7 +400,7 @@ class Message implements \JsonSerializable
 
                 $this->headers[$matches['key']] = $matches['value'];
 
-                // if the last character is a semicolon, then the header is continued on the next line
+                // Check for continued headers
                 if (str_ends_with($this->headers[$matches['key']], ';')) {
                     $headerInProgress = $matches['key'];
                 }
@@ -391,6 +408,7 @@ class Message implements \JsonSerializable
                 continue;
             }
 
+            // Detect alternative boundary format
             if (preg_match("~^--(?<boundary>[0-9A-Za-z'()+_,-./:=?]{0,68}[0-9A-Za-z'()+_,-./=?])~", $line, $matches)) {
                 $this->boundary = trim($matches['boundary']);
                 $collectingBody = true;
@@ -399,14 +417,16 @@ class Message implements \JsonSerializable
                 continue;
             }
 
-            // The line is not part of the email message. Let's remove it altogether.
+            // Remove any unrecognized content from the start of the message
             $this->message = ltrim(substr($this->message, strlen($line)));
         }
 
+        // Add the last part if there's any content
         if (!empty($currentBody) || !empty($currentBodyHeaders)) {
             $this->addPart($currentBody, $currentBodyHeaders);
         }
 
+        // Fallback to set content type from the first part if not set
         if (! $this->getContentType() && ($part = $this->getParts()[0] ?? null)) {
             foreach ($part->getHeaders() as $key => $value) {
                 if (strtolower($key) === 'content-type') {
@@ -501,11 +521,16 @@ class MessagePart implements \JsonSerializable
      */
     public function getContent(): string
     {
-        if (strtolower($this->getHeader('Content-Transfer-Encoding', '')) === 'base64') {
-            return base64_decode($this->content);
+        $content = $this->content;
+        $encoding = strtolower($this->getHeader('Content-Transfer-Encoding', ''));
+
+        if ($encoding === 'base64') {
+            return base64_decode($content);
+        } elseif ($encoding === 'quoted-printable') {
+            return quoted_printable_decode($content);
         }
 
-        return $this->content;
+        return $content;
     }
 
     /**
