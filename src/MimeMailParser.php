@@ -105,6 +105,11 @@ class Message implements \JsonSerializable
      *
      * @return array<string, string> Array of headers with key-value pairs
      */
+    /**
+     * Get all headers for this message part
+     *
+     * @return array Array of headers
+     */
     public function getHeaders(): array
     {
         return $this->headers;
@@ -135,6 +140,11 @@ class Message implements \JsonSerializable
      * Get the Content-Type header of the email message
      *
      * @return string The content type or empty string if not found
+     */
+    /**
+     * Get the content type of this message part
+     *
+     * @return string The content type or empty string if not set
      */
     public function getContentType(): string
     {
@@ -261,6 +271,11 @@ class Message implements \JsonSerializable
      *
      * @return int Size of the message in bytes
      */
+    /**
+     * Get the size of the content in bytes
+     *
+     * @return int Size in bytes
+     */
     public function getSize(): int
     {
         return strlen($this->message);
@@ -270,6 +285,11 @@ class Message implements \JsonSerializable
      * Convert the message to an array representation
      *
      * @return array<string, mixed> Array containing message data
+     */
+    /**
+     * Convert the message part to an array
+     *
+     * @return array Array representation of the message part
      */
     public function toArray(): array
     {
@@ -289,6 +309,11 @@ class Message implements \JsonSerializable
      * Specify data which should be serialized to JSON
      *
      * @return array<string, mixed> Data to be JSON serialized
+     */
+    /**
+     * Specify data which should be serialized to JSON
+     *
+     * @return mixed Data to be JSON serialized
      */
     public function jsonSerialize(): mixed
     {
@@ -432,18 +457,44 @@ class Message implements \JsonSerializable
         }
     }
 
+    /**
+     * Add a new message part to the parts array
+     *
+     * @param string $currentBody        The content of the message part
+     * @param array  $currentBodyHeaders The headers for this message part
+     *
+     * @return void
+     */
     protected function addPart(string $currentBody, array $currentBodyHeaders): void
     {
         $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
     }
 }
 
+/**
+ * MessagePart class for handling individual parts of an email message
+ *
+ * This class represents a single part of an email message, which could be
+ * the body text, HTML content, or an attachment.
+ *
+ * @category Library
+ * @package  MimeMailParser
+ * @author   Ernesto Serrano <info@ernesto.es>
+ * @license  MIT https://opensource.org/licenses/MIT
+ * @link     https://github.com/erseco/mime-mail-parser
+ */
 class MessagePart implements \JsonSerializable
 {
     protected string $content;
 
     protected array $headers;
 
+    /**
+     * Create a new MessagePart instance
+     *
+     * @param string $content The content of the message part
+     * @param array  $headers The headers associated with this part
+     */
     public function __construct(string $content, array $headers = [])
     {
         $this->content = $content;
@@ -460,11 +511,24 @@ class MessagePart implements \JsonSerializable
         return $this->headers;
     }
 
+    /**
+     * Get a specific header value
+     *
+     * @param string $name    The name of the header to retrieve
+     * @param mixed  $default Default value if header not found
+     *
+     * @return mixed The header value or default if not found
+     */
     public function getHeader(string $name, $default = null): mixed
     {
         return $this->headers[$name] ?? $default;
     }
 
+    /**
+     * Get the decoded content of this message part
+     *
+     * @return string The decoded content
+     */
     public function getContent(): string
     {
         if (strtolower($this->getHeader('Content-Transfer-Encoding', '')) === 'base64') {
@@ -474,26 +538,51 @@ class MessagePart implements \JsonSerializable
         return $this->content;
     }
 
+    /**
+     * Check if this part is HTML content
+     *
+     * @return bool True if content type is text/html
+     */
     public function isHtml(): bool
     {
         return str_starts_with(strtolower($this->getContentType()), 'text/html');
     }
 
+    /**
+     * Check if this part is plain text content
+     *
+     * @return bool True if content type is text/plain
+     */
     public function isText(): bool
     {
         return str_starts_with(strtolower($this->getContentType()), 'text/plain');
     }
 
+    /**
+     * Check if this part is an image
+     *
+     * @return bool True if content type starts with image/
+     */
     public function isImage(): bool
     {
         return str_starts_with(strtolower($this->getContentType()), 'image/');
     }
 
+    /**
+     * Check if this part is an attachment
+     *
+     * @return bool True if content disposition is attachment
+     */
     public function isAttachment(): bool
     {
         return str_starts_with($this->getHeader('Content-Disposition', ''), 'attachment');
     }
 
+    /**
+     * Get the filename of this part if it's an attachment
+     *
+     * @return string The filename or empty string if not found
+     */
     public function getFilename(): string
     {
         if (preg_match('/filename=([^;]+)/', $this->getHeader('Content-Disposition'), $matches)) {
