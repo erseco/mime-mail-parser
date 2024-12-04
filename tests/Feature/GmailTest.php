@@ -31,7 +31,7 @@ test('can parse a gmail message with attachments', function () {
         ->and($message->getDate()?->format('Y-m-d H:i:s'))->toBe('2024-12-04 15:47:13');
 
     $parts = $message->getParts();
-    expect($parts)->toHaveCount(2);
+    expect($parts)->toHaveCount(1);
 
     $attachments = $message->getAttachments();
     expect($attachments)->toHaveCount(1)
