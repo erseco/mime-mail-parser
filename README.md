@@ -1,6 +1,6 @@
 <div align="center">
     <p>
-        <h1>Mime Mail Parser for PHP<br/>Simple, fast, no extensions required</h1>
+        <h1>Mime Mail Parser for PHP<br/>Simple, fast, no extensions required, based on [opcodesio/mail-parser](https://github.com/opcodesio/mail-parser)</h1>
     </p>
 </div>
 
