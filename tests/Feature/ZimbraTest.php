@@ -23,7 +23,8 @@ test(
 
         $parts = $message->getParts();
         expect($parts)->toHaveCount(1)
-            ->and($parts[0]->getContentType())->toContain('text/html');
+            ->and($parts[0]->getContentType())->toBe('text/html; charset=utf-8')
+            ->and($parts[0]->getContent())->toContain("this is a mail from zimbra");
     }
 );
 
