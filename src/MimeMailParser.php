@@ -276,6 +276,11 @@ class Message implements \JsonSerializable
      *
      * @return int Size in bytes
      */
+    /**
+     * Get the size of the content in bytes
+     *
+     * @return int Size in bytes
+     */
     public function getSize(): int
     {
         return strlen($this->message);
@@ -295,6 +300,11 @@ class Message implements \JsonSerializable
      * Convert the message part to an array representation
      *
      * @return array Array containing message part data including headers, content, filename and size
+     */
+    /**
+     * Convert the message part to an array representation
+     *
+     * @return array Array containing message part data including headers, content, filename, and size
      */
     public function toArray(): array
     {
@@ -329,6 +339,11 @@ class Message implements \JsonSerializable
      * Specify data which should be serialized to JSON
      * 
      * @return array Array containing message part data including headers, content, filename and size
+     */
+    /**
+     * Specify data which should be serialized to JSON
+     *
+     * @return array Array containing message part data including headers, content, filename, and size
      */
     public function jsonSerialize(): mixed
     {
