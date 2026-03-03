@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Nextcloud Mail tests for MimeMailParser class
  *
@@ -8,12 +9,14 @@
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
+
 namespace Tests\Feature;
 
 use Erseco\Message;
 
 test(
-    'can parse a nextcloud message', function () {
+    'can parse a nextcloud message',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_nextcloud.eml');
 
         expect($message->getFrom())->toBe('Test User 3 <test3@example.com>')
@@ -28,7 +31,8 @@ test(
 );
 
 test(
-    'can parse a nextcloud message with attachments', function () {
+    'can parse a nextcloud message with attachments',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_nextcloud_attachments.eml');
 
         expect($message->getFrom())->toBe('Test User 3 <test3@example.com>')
