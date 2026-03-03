@@ -26,5 +26,4 @@ use Erseco\MimeMailParser;
  */
 abstract class TestCase extends BaseTestCase
 {
-
 }

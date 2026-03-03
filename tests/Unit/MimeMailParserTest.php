@@ -14,13 +14,11 @@ namespace Erseco\Message\Tests\Unit;
 
 require_once __DIR__ . '/../../src/MimeMailParser.php';
 
-
 use Erseco\Message;
 
-
-
 it(
-    'can parse a simple mail message', function () {
+    'can parse a simple mail message',
+    function () {
         $messageString = <<<EOF
 From: Sender <no-reply@example.com>
 To: Receiver <receiver@example.com>
@@ -53,7 +51,8 @@ EOF;
 );
 
 it(
-    'can parse lowercase headers', function () {
+    'can parse lowercase headers',
+    function () {
         $messageString = <<<EOF
 from: Sender <no-reply@example.com>
 to: Receiver <receiver@example.com>
@@ -86,7 +85,8 @@ EOF;
 );
 
 it(
-    'can parse a mail message with boundaries', function () {
+    'can parse a mail message with boundaries',
+    function () {
         date_default_timezone_set('UTC');
         $messageString = <<<EOF
 From: sender@example.com
@@ -156,12 +156,12 @@ EOF;
 </html>
 EOF
             );
-
     }
 );
 
 it(
-    'can parse a complex mail message', function () {
+    'can parse a complex mail message',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/complex_email.eml');
 
         expect($message->getFrom())->toBe('Service <no-reply@example.com>')
@@ -195,7 +195,8 @@ it(
 );
 
 it(
-    'can parse a multi-format mail message', function () {
+    'can parse a multi-format mail message',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/multiformat_email.eml');
 
         expect($message->getFrom())->toBe('Service <no-reply@example.com>')
@@ -228,12 +229,12 @@ Hi John,
 This is a confirmation of your appointment.
 EOF
             );
-
     }
 );
 
 it(
-    'can get contents of an encoded part', function () {
+    'can get contents of an encoded part',
+    function () {
         $messageString = <<<EOF
 From: sender@example.com
 To: recipient@example.com
@@ -288,7 +289,8 @@ EOF;
 );
 
 it(
-    'skips initial content that is not part of the message', function () {
+    'skips initial content that is not part of the message',
+    function () {
         $messageString = <<<EOF
 This is some initial content that is not part of the message.
 
@@ -333,7 +335,8 @@ EOF
 );
 
 it(
-    'catches boundaries on the same line', function () {
+    'catches boundaries on the same line',
+    function () {
         $messageString = <<<EOF
 From: sender@example.com
 To: recipient@example.com
@@ -381,7 +384,8 @@ EOF
 );
 
 it(
-    'still parses with a broken boundary', function () {
+    'still parses with a broken boundary',
+    function () {
         $messageString = <<<EOF
 From: sender@example.com
 To: recipient@example.com
@@ -419,10 +423,9 @@ EOF;
     }
 );
 
-
 it(
-    'can parse a multi-format mail message from file with attachment', function () {
-
+    'can parse a multi-format mail message from file with attachment',
+    function () {
         $rawEmail = file_get_contents(__DIR__ . '/../Fixtures/attachment_email.eml');
         $message = new Message($rawEmail);
 
@@ -455,14 +458,12 @@ it(
 test
 EOF
             );
-
     }
 );
 
-
 it(
-    'can parse a multi-format mail message from file with multiple attachments', function () {
-
+    'can parse a multi-format mail message from file with multiple attachments',
+    function () {
         $rawEmail = file_get_contents(__DIR__ . '/../Fixtures/multi_attachment_email.eml');
         $message = new Message($rawEmail);
 
@@ -494,8 +495,5 @@ it(
                 'Content-Transfer-Encoding' => 'base64',
                 ]
             )->and($message->getTextPart()?->getContent())->toContain('Dear Team');
-
     }
 );
-
-

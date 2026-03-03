@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Gmail tests for MimeMailParser class
  *
@@ -8,12 +9,14 @@
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
+
 namespace Tests\Feature;
 
 use Erseco\Message;
 
 test(
-    'can parse a simple gmail message', function () {
+    'can parse a simple gmail message',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_gmail.eml');
 
         expect($message->getFrom())->toBe('Test User 1 <test1@example.com>')
@@ -33,7 +36,8 @@ test(
 );
 
 test(
-    'can parse a gmail message with attachments', function () {
+    'can parse a gmail message with attachments',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_gmail_attachments.eml');
 
         expect($message->getFrom())->toBe('Test User 1 <test1@example.com>')
@@ -56,7 +60,8 @@ test(
 );
 
 test(
-    'can parse a gmail message with GB encoding', function () {
+    'can parse a gmail message with GB encoding',
+    function () {
         $message = Message::fromFile(__DIR__ . '/../Fixtures/raw_email_from_gmail_gb.eml');
 
         expect($message->getFrom())->toBe('Test User 2 <test2@example.com>')
