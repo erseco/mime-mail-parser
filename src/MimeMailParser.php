@@ -36,6 +36,8 @@ class Message implements \JsonSerializable
 
     protected array $parts = [];
 
+    protected bool $ignoreSignature = false;
+
     /**
      * Create a new Message instance
      *
@@ -45,6 +47,7 @@ class Message implements \JsonSerializable
     public function __construct(string $message, bool $ignoreSignature = false)
     {
         $this->message = $message;
+        $this->ignoreSignature = $ignoreSignature;
 
         $this->parse($ignoreSignature);
     }
@@ -59,7 +62,7 @@ class Message implements \JsonSerializable
      */
     public static function fromString(string $message, bool $ignoreSignature = false): self
     {
-        return new self($message);
+        return new self($message, $ignoreSignature);
     }
 
     /**
@@ -72,7 +75,7 @@ class Message implements \JsonSerializable
      */
     public static function fromFile($path, bool $ignoreSignature = false): self
     {
-        return new self(file_get_contents($path));
+        return new self(file_get_contents($path), $ignoreSignature);
     }
 
     /**
@@ -459,13 +462,36 @@ class Message implements \JsonSerializable
         if (str_contains(strtolower($contentType), 'multipart/')) {
             if (preg_match('/boundary=["\']?([^"\';\s]+)/i', $contentType, $matches)) {
                 $innerMessage = "Content-Type: " . $contentType . "\n\n" . $currentBody;
-                $innerParser = new self($innerMessage);
+                $innerParser = new self($innerMessage, $this->ignoreSignature);
                 foreach ($innerParser->getParts() as $innerPart) {
                     $this->parts[] = $innerPart;
                 }
                 return;
             }
         }
+
+        if ($this->ignoreSignature && str_starts_with(strtolower($contentType), 'text/plain')) {
+            $currentBody = $this->stripSignature($currentBody);
+        }
+
         $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
+    }
+
+    /**
+     * Strip the email signature from a body string.
+     * Signatures are conventionally delimited by "-- " on its own line (RFC 3676).
+     *
+     * @param string $body The body content to strip the signature from
+     *
+     * @return string The body without the signature
+     */
+    protected function stripSignature(string $body): string
+    {
+        // Match "-- " or "--" on its own line (RFC 3676 signature delimiter)
+        if (preg_match('/^-- ?\r?$/m', $body, $matches, PREG_OFFSET_CAPTURE)) {
+            return rtrim(substr($body, 0, $matches[0][1]));
+        }
+
+        return $body;
     }
 }
