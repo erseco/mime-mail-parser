@@ -474,25 +474,26 @@ it(
 
         $parts = $message->getParts();
 
-        expect($parts)->toHaveCount(3)
-            ->and($parts[0]->getContentType())->toBe('image/jpeg; name=embedded_image_0')
-            ->and($parts[0]->getHeaders())->toBe(
+        expect($parts)->toHaveCount(5)
+            ->and($parts[0]->getContentType())->toBe('text/plain; charset=utf-8')
+            ->and($parts[1]->getContentType())->toBe('text/html; charset=utf-8')
+            ->and($parts[2]->getContentType())->toBe('image/jpeg; name=embedded_image_0')
+            ->and($parts[2]->getHeaders())->toBe(
                 [
                 'Content-Type' => 'image/jpeg; name=embedded_image_0',
-                'Content-Transfer-Encoding' => 'base64',
-                'Content-Description' => 'HTML Version of Message',
                 'Content-Disposition' => 'inline; filename=embedded_image_0',
+                'Content-Transfer-Encoding' => 'base64',
                 'Content-ID' => '<XUO5zeHECaACtEYl74_9oDC@tfvs0015>',
                 ]
             )
-            ->and($parts[1]->getContentType())->toBe('application/pdf; name=sample-1-small.pdf')
-            ->and($parts[1]->getHeaders())->toBe(
+            ->and($parts[3]->getContentType())->toBe('application/pdf; name=sample-1-small.pdf')
+            ->and($parts[3]->getHeaders())->toBe(
                 [
                 'Content-Type' => 'application/pdf; name=sample-1-small.pdf',
                 'Content-Disposition' => 'attachment; filename=sample-1-small.pdf',
                 'Content-Transfer-Encoding' => 'base64',
                 ]
-            )->and($message->getTextPart()?->getContent())->toBe(null);
+            )->and($message->getTextPart()?->getContent())->toContain('Dear Team');
 
     }
 );

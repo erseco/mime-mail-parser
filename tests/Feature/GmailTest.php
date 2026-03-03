@@ -42,7 +42,11 @@ test(
         ->and($message->getDate()?->format('Y-m-d H:i:s'))->toBe('2024-12-04 15:47:13');
 
         $parts = $message->getParts();
-        expect($parts)->toHaveCount(2);
+        expect($parts)->toHaveCount(4)
+            ->and($parts[0]->getContentType())->toContain('text/plain')
+            ->and($parts[1]->getContentType())->toContain('text/html')
+            ->and($parts[2]->getContentType())->toContain('image/jpeg')
+            ->and($parts[3]->getContentType())->toContain('application/pdf');
 
         $attachments = $message->getAttachments();
         expect($attachments)->toHaveCount(1)

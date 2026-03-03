@@ -296,6 +296,7 @@ class Message implements \JsonSerializable
         $headerInProgress = null;
 
         $collectingBody = false;
+        $bodyContentStarted = false;
         $currentBody = '';
         $currentBodyHeaders = [];
         $currentBodyHeaderInProgress = null;
@@ -338,13 +339,14 @@ class Message implements \JsonSerializable
                 }
 
                 $collectingBody = true;
+                $bodyContentStarted = false;
                 $currentBody = '';
                 $currentBodyHeaders = [];
                 continue;
             }
 
-            // Collect body headers
-            if ($collectingBody && preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
+            // Collect body headers (only before body content starts)
+            if ($collectingBody && !$bodyContentStarted && preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
                 $currentBodyHeaders[$matches['key']] = $matches['value'];
 
                 // Check for continued headers
@@ -357,19 +359,22 @@ class Message implements \JsonSerializable
 
             // Collect body content
             if ($collectingBody) {
+                $bodyContentStarted = true;
+
                 // Special handling for boundary close line
                 if (isset($this->boundary) && str_contains($line, '--'.$this->boundary)) {
                     $parts = explode('--'.$this->boundary, $line);
                     $currentBody .= $parts[0];
-                
+
                     // Add part and prepare for next
                     $this->addPart($currentBody, $currentBodyHeaders);
                     $currentBody = '';
                     $currentBodyHeaders = [];
+                    $bodyContentStarted = false;
                     $collectingBody = true;
                     continue;
                 }
-            
+
                 $currentBody .= $line . PHP_EOL;
                 continue;
             }
@@ -384,7 +389,7 @@ class Message implements \JsonSerializable
             // Collect message headers
             if (preg_match('/^(?<key>[A-Za-z\-0-9]+): (?<value>.*)$/', $line, $matches)) {
                 // Special handling for single-part messages or non-multipart content types
-                if (strtolower($matches['key']) === 'content-type' && !isset($this->boundary) && !str_contains($matches['value'], 'multipart/mixed')) {
+                if (strtolower($matches['key']) === 'content-type' && !isset($this->boundary) && !str_contains($matches['value'], 'multipart/')) {
                     $collectingBody = true;
                     $currentBody = '';
                     $currentBodyHeaders = [
@@ -412,6 +417,7 @@ class Message implements \JsonSerializable
             if (preg_match("~^--(?<boundary>[0-9A-Za-z'()+_,-./:=?]{0,68}[0-9A-Za-z'()+_,-./=?])~", $line, $matches)) {
                 $this->boundary = trim($matches['boundary']);
                 $collectingBody = true;
+                $bodyContentStarted = false;
                 $currentBody = '';
                 $currentBodyHeaders = [];
                 continue;
@@ -447,6 +453,17 @@ class Message implements \JsonSerializable
      */
     protected function addPart(string $currentBody, array $currentBodyHeaders): void
     {
+        $contentType = $currentBodyHeaders['Content-Type'] ?? '';
+        if (str_contains(strtolower($contentType), 'multipart/')) {
+            if (preg_match('/boundary=["\']?([^"\';\s]+)/i', $contentType, $matches)) {
+                $innerMessage = "Content-Type: " . $contentType . "\n\n" . $currentBody;
+                $innerParser = new self($innerMessage);
+                foreach ($innerParser->getParts() as $innerPart) {
+                    $this->parts[] = $innerPart;
+                }
+                return;
+            }
+        }
         $this->parts[] = new MessagePart(trim($currentBody), $currentBodyHeaders);
     }
 }
