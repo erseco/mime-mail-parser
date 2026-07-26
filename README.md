@@ -48,6 +48,22 @@ $message = Message::fromString($rawEmail);
 // Or parse from a file directly
 $message = Message::fromFile('/path/to/email.eml');
 
+// Optional safety limits (defaults keep ordinary mail working)
+use Erseco\ParserOptions;
+
+$options = new ParserOptions(
+    maxMessageBytes: 10_485_760,   // 10 MiB raw message
+    maxParts: 1000,                // leaf MIME parts
+    maxDepth: 20,                  // nested multipart depth
+    maxHeaders: 500,               // headers per header block
+    maxHeaderLineLength: 998,      // bytes per header line
+    maxDecodedPartBytes: 10_485_760
+);
+
+$message = Message::fromString($rawEmail, false, $options);
+// Exceeding a limit throws Erseco\ParserLimitExceededException
+// with getLimitName(), getLimitValue(), and getActualValue().
+
 $message->getHeaders();                 // get all headers as array
 $message->getHeader('Content-Type');    // get specific header (raw unfolded value)
 $message->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'

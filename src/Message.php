@@ -33,46 +33,99 @@ class Message implements \JsonSerializable
 
     protected bool $ignoreSignature = false;
 
+    protected ParserOptions $options;
+
+    protected ParserContext $context;
+
     /**
      * Create a new Message instance.
      *
-     * @param string $message         The raw email message.
-     * @param bool   $ignoreSignature Whether to ignore message signatures.
+     * @param string              $message         The raw email message.
+     * @param bool                $ignoreSignature Whether to ignore message signatures.
+     * @param ParserOptions|null  $options         Optional safety limits.
+     * @param ParserContext|null  $context         Shared state for nested parsers.
+     *
+     * @throws ParserLimitExceededException When a configured limit is exceeded.
      */
-    public function __construct(string $message, bool $ignoreSignature = false)
-    {
-        $this->message = $message;
+    public function __construct(
+        string $message,
+        bool $ignoreSignature = false,
+        ?ParserOptions $options = null,
+        ?ParserContext $context = null
+    ) {
+        $this->options = $options ?? ($context !== null ? $context->options : ParserOptions::defaults());
+        $this->context = $context ?? new ParserContext($this->options);
         $this->ignoreSignature = $ignoreSignature;
+
+        if ($context === null) {
+            $this->assertWithinLimit(
+                'maxMessageBytes',
+                $this->options->maxMessageBytes,
+                strlen($message)
+            );
+        }
+
+        if ($this->context->depth > $this->options->maxDepth) {
+            $this->assertWithinLimit(
+                'maxDepth',
+                $this->options->maxDepth,
+                $this->context->depth
+            );
+        }
+
+        $this->message = $message;
         $this->parse();
     }
 
     /**
      * Create a Message instance from a string.
      *
-     * @param string $message         The raw email message string.
-     * @param bool   $ignoreSignature Whether to ignore message signatures.
+     * @param string             $message         The raw email message string.
+     * @param bool               $ignoreSignature Whether to ignore message signatures.
+     * @param ParserOptions|null $options         Optional safety limits.
      *
      * @return self
      */
-    public static function fromString(string $message, bool $ignoreSignature = false): self
-    {
-        return new self($message, $ignoreSignature);
+    public static function fromString(
+        string $message,
+        bool $ignoreSignature = false,
+        ?ParserOptions $options = null
+    ): self {
+        return new self($message, $ignoreSignature, $options);
     }
 
     /**
      * Create a Message instance from a file.
      *
-     * @param string $path            Path to the email message file.
-     * @param bool   $ignoreSignature Whether to ignore message signatures.
+     * @param string             $path            Path to the email message file.
+     * @param bool               $ignoreSignature Whether to ignore message signatures.
+     * @param ParserOptions|null $options         Optional safety limits.
      *
-     * @throws \RuntimeException When the file cannot be read.
+     * @throws \RuntimeException            When the file cannot be read.
+     * @throws ParserLimitExceededException When the file exceeds maxMessageBytes.
      *
      * @return self
      */
-    public static function fromFile(string $path, bool $ignoreSignature = false): self
-    {
+    public static function fromFile(
+        string $path,
+        bool $ignoreSignature = false,
+        ?ParserOptions $options = null
+    ): self {
         if (!is_readable($path)) {
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
+        }
+
+        $options = $options ?? ParserOptions::defaults();
+        $fileSize = filesize($path);
+
+        if ($fileSize !== false) {
+            if ($fileSize > $options->maxMessageBytes) {
+                throw new ParserLimitExceededException(
+                    'maxMessageBytes',
+                    $options->maxMessageBytes,
+                    $fileSize
+                );
+            }
         }
 
         $message = file_get_contents($path);
@@ -81,7 +134,17 @@ class Message implements \JsonSerializable
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
         }
 
-        return new self($message, $ignoreSignature);
+        return new self($message, $ignoreSignature, $options);
+    }
+
+    /**
+     * Get the active parser options.
+     *
+     * @return ParserOptions
+     */
+    public function getOptions(): ParserOptions
+    {
+        return $this->options;
     }
 
     /**
@@ -449,10 +512,21 @@ class Message implements \JsonSerializable
 
         if (str_starts_with(strtolower($contentType), 'multipart/')) {
             $innerMessage = $this->buildHeaderBlock($headers) . "\r\n\r\n" . $body;
-            $innerParser = new self($innerMessage, $this->ignoreSignature);
+            $this->context->depth++;
 
-            foreach ($innerParser->getParts() as $innerPart) {
-                $this->parts[] = $innerPart;
+            try {
+                $innerParser = new self(
+                    $innerMessage,
+                    $this->ignoreSignature,
+                    $this->options,
+                    $this->context
+                );
+
+                foreach ($innerParser->getParts() as $innerPart) {
+                    $this->parts[] = $innerPart;
+                }
+            } finally {
+                $this->context->depth--;
             }
 
             return;
@@ -462,7 +536,22 @@ class Message implements \JsonSerializable
             $body = $this->stripSignature($body);
         }
 
-        $this->parts[] = new MessagePart($body, $headers);
+        $this->context->partCount++;
+        $this->assertWithinLimit(
+            'maxParts',
+            $this->options->maxParts,
+            $this->context->partCount
+        );
+
+        $part = new MessagePart($body, $headers);
+        $decodedSize = strlen($part->getContent());
+        $this->assertWithinLimit(
+            'maxDecodedPartBytes',
+            $this->options->maxDecodedPartBytes,
+            $decodedSize
+        );
+
+        $this->parts[] = $part;
     }
 
     /**
@@ -479,6 +568,12 @@ class Message implements \JsonSerializable
         $lines = preg_split('/\r\n|\n|\r/', $headerBlock) ?: [];
 
         foreach ($lines as $line) {
+            $this->assertWithinLimit(
+                'maxHeaderLineLength',
+                $this->options->maxHeaderLineLength,
+                strlen($line)
+            );
+
             if ($currentKey !== null && preg_match('/^[\t ]/', $line)) {
                 $headers[$currentKey] .= "\n" . $line;
                 continue;
@@ -505,9 +600,33 @@ class Message implements \JsonSerializable
 
             $headers[$matches['key']] = $matches['value'];
             $currentKey = $matches['key'];
+
+            $this->assertWithinLimit(
+                'maxHeaders',
+                $this->options->maxHeaders,
+                count($headers)
+            );
         }
 
         return $headers;
+    }
+
+    /**
+     * Throw when a measured value exceeds a configured limit.
+     *
+     * @param string $limitName   Option name.
+     * @param int    $limitValue  Configured maximum.
+     * @param int    $actualValue Observed value.
+     *
+     * @throws ParserLimitExceededException When actualValue is greater than limitValue.
+     *
+     * @return void
+     */
+    protected function assertWithinLimit(string $limitName, int $limitValue, int $actualValue): void
+    {
+        if ($actualValue > $limitValue) {
+            throw new ParserLimitExceededException($limitName, $limitValue, $actualValue);
+        }
     }
 
     /**
