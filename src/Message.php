@@ -71,7 +71,11 @@ class Message implements \JsonSerializable
      */
     public static function fromFile(string $path, bool $ignoreSignature = false): self
     {
-        $message = @file_get_contents($path);
+        if (!is_readable($path)) {
+            throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
+        }
+
+        $message = file_get_contents($path);
 
         if ($message === false) {
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
@@ -418,11 +422,13 @@ class Message implements \JsonSerializable
                 continue;
             }
 
-            if (!preg_match(
-                "/^(?<key>[!#$%&'*+\\-.^_`|~0-9A-Za-z]+):[\\t ]*(?<value>.*)$/",
-                $line,
-                $matches
-            )) {
+            if (
+                !preg_match(
+                    "/^(?<key>[!#$%&'*+\\-.^_`|~0-9A-Za-z]+):[\\t ]*(?<value>.*)$/",
+                    $line,
+                    $matches
+                )
+            ) {
                 $currentKey = null;
                 continue;
             }
@@ -479,12 +485,14 @@ class Message implements \JsonSerializable
             return $message;
         }
 
-        if (preg_match(
-            '/(?:\r\n|\n|\r)(?<header>' . $headerPattern . ')/',
-            $message,
-            $matches,
-            PREG_OFFSET_CAPTURE
-        )) {
+        if (
+            preg_match(
+                '/(?:\r\n|\n|\r)(?<header>' . $headerPattern . ')/',
+                $message,
+                $matches,
+                PREG_OFFSET_CAPTURE
+            )
+        ) {
             return substr($message, $matches['header'][1]);
         }
 
@@ -494,8 +502,10 @@ class Message implements \JsonSerializable
     /**
      * Split a multipart body into child parts.
      *
-     * Correct messages use delimiter-only lines. A fallback keeps support for
-     * malformed messages where boundaries are concatenated with the content.
+     * Correct messages place delimiters on their own lines. Real-world messages
+     * sometimes append a delimiter to the previous content line; that form is
+     * also supported via str_ends_with matching (same behaviour as the legacy
+     * parser). An explode-based fallback remains for other malformed layouts.
      *
      * @param string $body     Multipart body.
      * @param string $boundary Multipart boundary.
@@ -505,6 +515,7 @@ class Message implements \JsonSerializable
     protected function splitMultipartBody(string $body, string $boundary): array
     {
         $delimiter = '--' . $boundary;
+        $closeDelimiter = $delimiter . '--';
         $lines = preg_split('/\r\n|\n|\r/', $body) ?: [];
         $parts = [];
         $currentLines = [];
@@ -514,15 +525,34 @@ class Message implements \JsonSerializable
         foreach ($lines as $line) {
             $trimmedLine = rtrim($line, "\t ");
 
-            if ($trimmedLine === $delimiter || $trimmedLine === $delimiter . '--') {
+            // Closing delimiter may share the line with the last content bytes.
+            if (str_ends_with($trimmedLine, $closeDelimiter)) {
                 if ($collecting) {
+                    $prefix = substr($trimmedLine, 0, -strlen($closeDelimiter));
+
+                    if ($prefix !== '') {
+                        $currentLines[] = $prefix;
+                    }
+
                     $parts[] = implode("\n", $currentLines);
                     $currentLines = [];
                 }
 
-                if ($trimmedLine === $delimiter . '--') {
-                    $foundClosingDelimiter = true;
-                    break;
+                $foundClosingDelimiter = true;
+                break;
+            }
+
+            // Part delimiter may also appear at the end of a content line.
+            if (str_ends_with($trimmedLine, $delimiter)) {
+                if ($collecting) {
+                    $prefix = substr($trimmedLine, 0, -strlen($delimiter));
+
+                    if ($prefix !== '') {
+                        $currentLines[] = $prefix;
+                    }
+
+                    $parts[] = implode("\n", $currentLines);
+                    $currentLines = [];
                 }
 
                 $collecting = true;
