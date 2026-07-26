@@ -28,10 +28,10 @@ jobs:
         run: composer validate --strict
 
       - name: Install dependencies
-        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Verify PSR-4 autoloading
-        run: composer dump-autoload --optimize --strict-psr
+        run: composer dump-autoload --optimize --strict-psr --quiet
 
       - name: Audit dependencies
         run: composer audit
@@ -59,7 +59,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Execute Pest tests
         run: composer test
@@ -79,7 +79,7 @@ jobs:
           coverage: none
 
       - name: Install lowest supported dependencies
-        run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
+        run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Execute Pest tests
         run: composer test
@@ -99,10 +99,10 @@ jobs:
           coverage: none
 
       - name: Install production dependencies
-        run: composer install --no-dev --prefer-dist --no-interaction --no-progress
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Verify optimized autoloading
-        run: composer dump-autoload --no-dev --optimize --strict-psr
+        run: composer dump-autoload --no-dev --optimize --strict-psr --quiet
 
       - name: Execute consumer smoke test
         run: |
