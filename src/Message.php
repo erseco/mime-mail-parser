@@ -202,6 +202,68 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get a header value with RFC 2047 encoded words decoded.
+     *
+     * Unlike getHeader(), this returns human-readable text (preferably UTF-8).
+     * The raw unfolded value remains available via getHeader().
+     *
+     * @param string $header  The name of the header to retrieve.
+     * @param mixed  $default Default value if the header is not found.
+     *
+     * @return mixed Decoded header value or the supplied default.
+     */
+    public function getDecodedHeader(string $header, $default = null): mixed
+    {
+        $value = $this->getHeader($header, $default);
+
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        return Rfc2047::decode($value);
+    }
+
+    /**
+     * Get the subject with RFC 2047 decoding applied.
+     *
+     * @return string Decoded subject.
+     */
+    public function getDecodedSubject(): string
+    {
+        return $this->getDecodedHeader('Subject', '');
+    }
+
+    /**
+     * Get the From header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded From header.
+     */
+    public function getDecodedFrom(): string
+    {
+        return $this->getDecodedHeader('From', '');
+    }
+
+    /**
+     * Get the To header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded To header.
+     */
+    public function getDecodedTo(): string
+    {
+        return $this->getDecodedHeader('To', '');
+    }
+
+    /**
+     * Get the Reply-To header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded Reply-To header.
+     */
+    public function getDecodedReplyTo(): string
+    {
+        return $this->getDecodedHeader('Reply-To', '');
+    }
+
+    /**
      * Get the message date.
      *
      * @return \DateTime|null Parsed date or null.

@@ -49,12 +49,23 @@ $message = Message::fromString($rawEmail);
 $message = Message::fromFile('/path/to/email.eml');
 
 $message->getHeaders();                 // get all headers as array
-$message->getHeader('Content-Type');    // get specific header
+$message->getHeader('Content-Type');    // get specific header (raw unfolded value)
 $message->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
 $message->getFrom();                    // 'Service <service@example.com>'
 $message->getTo();                      // 'John Doe <johndoe@example.com>'
-$message->getSubject();                 // 'Subject line'
+$message->getSubject();                 // raw subject (may still contain RFC 2047 encoded words)
 $message->getDate();                    // DateTime object when the email was sent
+
+// RFC 2047: raw vs decoded headers
+// getHeader() / getSubject() keep the raw unfolded value, including encoded-words.
+// getDecodedHeader() and the convenience helpers decode B/Q encoded-words to text.
+$message->getHeader('Subject');         // '=?UTF-8?B?UmV1bmnDs24gZGUgcHJveWVjdG8=?='
+$message->getDecodedHeader('Subject');  // 'Reunión de proyecto'
+$message->getDecodedSubject();          // same as getDecodedHeader('Subject')
+$message->getDecodedFrom();
+$message->getDecodedTo();
+$message->getDecodedReplyTo();
+
 
 $message->getParts();       // Returns array of MessagePart objects
 $message->getHtmlPart();    // Returns MessagePart with HTML content
