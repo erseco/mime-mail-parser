@@ -37,7 +37,11 @@ jobs:
         run: composer audit
 
       - name: Execute linter
-        run: composer lint
+        run: |
+          composer lint > phpcs.log 2>&1 || {
+            tail -n 100 phpcs.log
+            exit 1
+          }
 
   test:
     runs-on: ubuntu-latest
@@ -62,7 +66,11 @@ jobs:
         run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Execute Pest tests
-        run: composer test
+        run: |
+          composer test > pest.log 2>&1 || {
+            tail -n 100 pest.log
+            exit 1
+          }
 
   lowest-dependencies:
     runs-on: ubuntu-latest
@@ -82,7 +90,11 @@ jobs:
         run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
 
       - name: Execute Pest tests
-        run: composer test
+        run: |
+          composer test > pest.log 2>&1 || {
+            tail -n 100 pest.log
+            exit 1
+          }
 
   consumer:
     runs-on: ubuntu-latest
