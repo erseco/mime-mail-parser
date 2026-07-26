@@ -84,8 +84,11 @@ $firstPart->isHtml();                     // true if it's an HTML part
 $firstPart->isText();                     // true if it's a text part
 $firstPart->isAttachment();               // true if it's an attachment
 $firstPart->getFilename();                // name of the file if attachment
+                                          // supports filename=, filename*=, and RFC 2231
+                                          // continuations (filename*0*=, filename*1*=, …)
 $firstPart->getSize();                    // size of content in bytes
 ```
+
 
 ## Credits
 

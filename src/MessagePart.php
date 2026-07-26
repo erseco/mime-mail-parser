@@ -234,6 +234,11 @@ class MessagePart implements \JsonSerializable
     /**
      * Extract and decode a MIME header parameter.
      *
+     * Preference order:
+     * 1. RFC 2231 continuations (`name*0*=`, `name*1*=`, …)
+     * 2. Single extended parameter (`name*=`)
+     * 3. Regular parameter (`name=`)
+     *
      * @param string $headerName Header name.
      * @param string $parameter  Parameter name.
      *
@@ -245,6 +250,12 @@ class MessagePart implements \JsonSerializable
 
         if (!is_string($header) || $header === '') {
             return null;
+        }
+
+        $continued = $this->getContinuedParameter($header, $parameter);
+
+        if ($continued !== null) {
+            return $continued;
         }
 
         $extendedPattern = '/(?:^|;)\s*'
@@ -271,6 +282,83 @@ class MessagePart implements \JsonSerializable
     }
 
     /**
+     * Assemble an RFC 2231 continued parameter value.
+     *
+     * Segments may appear out of order. Duplicate indexes keep the last value.
+     * Missing indexes are skipped so remaining segments still concatenate.
+     *
+     * @param string $header    Full header value.
+     * @param string $parameter Base parameter name (e.g. filename).
+     *
+     * @return string|null Assembled value or null when no continuations exist.
+     */
+    protected function getContinuedParameter(string $header, string $parameter): ?string
+    {
+        $pattern = '/(?:^|;)\s*'
+            . preg_quote($parameter, '/')
+            . '\*(?<index>\d+)(?<encoded>\*)?\s*=\s*'
+            . '(?:"(?<quoted>(?:\\\\.|[^"])*)"|(?<plain>[^;]*))/i';
+
+        if (!preg_match_all($pattern, $header, $matches, PREG_SET_ORDER)) {
+            return null;
+        }
+
+        $segments = [];
+
+        foreach ($matches as $match) {
+            $index = (int) $match['index'];
+            $encoded = ($match['encoded'] ?? '') === '*';
+            $raw = $match['quoted'] !== '' ? $match['quoted'] : trim($match['plain']);
+            $raw = stripcslashes($raw);
+
+            if ($encoded) {
+                $segments[$index] = [
+                    'encoded' => true,
+                    'value' => $raw,
+                ];
+            } else {
+                $segments[$index] = [
+                    'encoded' => false,
+                    'value' => $raw,
+                ];
+            }
+        }
+
+        if ($segments === []) {
+            return null;
+        }
+
+        ksort($segments, SORT_NUMERIC);
+
+        $charset = null;
+        $parts = [];
+
+        foreach ($segments as $index => $segment) {
+            $value = $segment['value'];
+
+            if ($segment['encoded']) {
+                if ($index === 0 && preg_match("/^([^']*)'[^']*'(.*)$/", $value, $charsetMatch)) {
+                    $charset = $charsetMatch[1];
+                    $value = $charsetMatch[2];
+                }
+
+                $parts[] = rawurldecode($value);
+                continue;
+            }
+
+            $parts[] = $value;
+        }
+
+        $joined = implode('', $parts);
+
+        if ($charset !== null && $charset !== '') {
+            return $this->convertParameterCharset($joined, $charset);
+        }
+
+        return $joined;
+    }
+
+    /**
      * Decode an RFC 2231 extended parameter value.
      *
      * @param string $value Encoded parameter value.
@@ -286,18 +374,57 @@ class MessagePart implements \JsonSerializable
         $charset = $matches[1];
         $decoded = rawurldecode($matches[2]);
 
-        if (
-            $charset !== ''
-            && strcasecmp($charset, 'UTF-8') !== 0
-            && function_exists('iconv')
-        ) {
-            $converted = @iconv($charset, 'UTF-8//IGNORE', $decoded);
+        return $this->convertParameterCharset($decoded, $charset);
+    }
 
-            if ($converted !== false) {
+    /**
+     * Convert parameter bytes to UTF-8 when a charset is declared.
+     *
+     * Falls back to the original bytes when conversion is unavailable.
+     *
+     * @param string $bytes   Decoded parameter bytes.
+     * @param string $charset Source charset.
+     *
+     * @return string Converted or original value.
+     */
+    protected function convertParameterCharset(string $bytes, string $charset): string
+    {
+        if ($charset === '' || strcasecmp($charset, 'UTF-8') === 0) {
+            return $bytes;
+        }
+
+        // Reuse the RFC 2047 charset path by wrapping as a trivial B word.
+        // Decode only the charset conversion logic through a synthetic call.
+        if (function_exists('mb_convert_encoding')) {
+            $converted = @mb_convert_encoding($bytes, 'UTF-8', $charset);
+
+            if (is_string($converted) && ($converted !== '' || $bytes === '')) {
                 return $converted;
             }
         }
 
-        return $decoded;
+        if (function_exists('iconv')) {
+            $converted = @iconv($charset, 'UTF-8//IGNORE', $bytes);
+
+            if (is_string($converted)) {
+                return $converted;
+            }
+        }
+
+        $normalized = strtoupper(str_replace('_', '-', $charset));
+
+        if ($normalized === 'ISO-8859-1' || $normalized === 'ISO8859-1' || $normalized === 'LATIN1') {
+            return Rfc2047::decode("=?ISO-8859-1?B?" . base64_encode($bytes) . "?=");
+        }
+
+        if (
+            $normalized === 'WINDOWS-1252'
+            || $normalized === 'CP1252'
+            || $normalized === 'WIN-1252'
+        ) {
+            return Rfc2047::decode("=?Windows-1252?B?" . base64_encode($bytes) . "?=");
+        }
+
+        return $bytes;
     }
 }
