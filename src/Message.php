@@ -27,8 +27,10 @@ class Message implements \JsonSerializable
 
     protected ?string $boundary = null;
 
+    /** @var array<string, string> */
     protected array $headers = [];
 
+    /** @var list<MessagePart> */
     protected array $parts = [];
 
     protected bool $ignoreSignature = false;
@@ -211,7 +213,7 @@ class Message implements \JsonSerializable
      */
     public function getContentType(): string
     {
-        return $this->getHeader('Content-Type', '');
+        return $this->getStringHeader('Content-Type');
     }
 
     /**
@@ -221,7 +223,7 @@ class Message implements \JsonSerializable
      */
     public function getId(): string
     {
-        return trim($this->getHeader('Message-ID', ''), '<>');
+        return trim($this->getStringHeader('Message-ID'), '<>');
     }
 
     /**
@@ -231,7 +233,7 @@ class Message implements \JsonSerializable
      */
     public function getSubject(): string
     {
-        return $this->getHeader('Subject', '');
+        return $this->getStringHeader('Subject');
     }
 
     /**
@@ -241,7 +243,7 @@ class Message implements \JsonSerializable
      */
     public function getFrom(): string
     {
-        return $this->getHeader('From', '');
+        return $this->getStringHeader('From');
     }
 
     /**
@@ -251,7 +253,7 @@ class Message implements \JsonSerializable
      */
     public function getTo(): string
     {
-        return $this->getHeader('To', '');
+        return $this->getStringHeader('To');
     }
 
     /**
@@ -261,7 +263,7 @@ class Message implements \JsonSerializable
      */
     public function getReplyTo(): string
     {
-        return $this->getHeader('Reply-To', '');
+        return $this->getStringHeader('Reply-To');
     }
 
     /**
@@ -293,7 +295,7 @@ class Message implements \JsonSerializable
      */
     public function getDecodedSubject(): string
     {
-        return $this->getDecodedHeader('Subject', '');
+        return $this->getDecodedStringHeader('Subject');
     }
 
     /**
@@ -303,7 +305,7 @@ class Message implements \JsonSerializable
      */
     public function getDecodedFrom(): string
     {
-        return $this->getDecodedHeader('From', '');
+        return $this->getDecodedStringHeader('From');
     }
 
     /**
@@ -313,7 +315,7 @@ class Message implements \JsonSerializable
      */
     public function getDecodedTo(): string
     {
-        return $this->getDecodedHeader('To', '');
+        return $this->getDecodedStringHeader('To');
     }
 
     /**
@@ -323,7 +325,7 @@ class Message implements \JsonSerializable
      */
     public function getDecodedReplyTo(): string
     {
-        return $this->getDecodedHeader('Reply-To', '');
+        return $this->getDecodedStringHeader('Reply-To');
     }
 
     /**
@@ -627,6 +629,34 @@ class Message implements \JsonSerializable
         if ($actualValue > $limitValue) {
             throw new ParserLimitExceededException($limitName, $limitValue, $actualValue);
         }
+    }
+
+    /**
+     * Get a header value guaranteed to be a string.
+     *
+     * @param string $header Header name.
+     *
+     * @return string Header value or an empty string.
+     */
+    protected function getStringHeader(string $header): string
+    {
+        $value = $this->getHeader($header, '');
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
+     * Get a decoded header value guaranteed to be a string.
+     *
+     * @param string $header Header name.
+     *
+     * @return string Decoded header value or an empty string.
+     */
+    protected function getDecodedStringHeader(string $header): string
+    {
+        $value = $this->getDecodedHeader($header, '');
+
+        return is_string($value) ? $value : '';
     }
 
     /**

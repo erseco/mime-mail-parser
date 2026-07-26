@@ -25,6 +25,7 @@ class MessagePart implements \JsonSerializable
 {
     protected string $content;
 
+    /** @var array<string, string> */
     protected array $headers;
 
     /**
@@ -46,7 +47,7 @@ class MessagePart implements \JsonSerializable
      */
     public function getContentType(): string
     {
-        return $this->getHeader('Content-Type', '');
+        return $this->getStringHeader('Content-Type');
     }
 
     /**
@@ -88,7 +89,7 @@ class MessagePart implements \JsonSerializable
      */
     public function getContent(): string
     {
-        $encoding = strtolower(trim($this->getHeader('Content-Transfer-Encoding', '')));
+        $encoding = strtolower(trim($this->getStringHeader('Content-Transfer-Encoding')));
 
         if ($encoding === 'base64') {
             $decoded = base64_decode($this->content, true);
@@ -158,6 +159,20 @@ class MessagePart implements \JsonSerializable
     }
 
     /**
+     * Get a header value guaranteed to be a string.
+     *
+     * @param string $name Header name.
+     *
+     * @return string Header value or an empty string.
+     */
+    protected function getStringHeader(string $name): string
+    {
+        $value = $this->getHeader($name, '');
+
+        return is_string($value) ? $value : '';
+    }
+
+    /**
      * Check if this part is HTML content.
      *
      * @return bool True if the content type is text/html.
@@ -195,7 +210,7 @@ class MessagePart implements \JsonSerializable
     public function isInline(): bool
     {
         return str_starts_with(
-            strtolower(ltrim($this->getHeader('Content-Disposition', ''))),
+            strtolower(ltrim($this->getStringHeader('Content-Disposition'))),
             'inline'
         );
     }
@@ -207,7 +222,7 @@ class MessagePart implements \JsonSerializable
      */
     public function isAttachment(): bool
     {
-        $disposition = strtolower(ltrim($this->getHeader('Content-Disposition', '')));
+        $disposition = strtolower(ltrim($this->getStringHeader('Content-Disposition')));
 
         if (str_starts_with($disposition, 'attachment')) {
             return true;
@@ -223,7 +238,7 @@ class MessagePart implements \JsonSerializable
      */
     public function getContentId(): string
     {
-        return trim($this->getHeader('Content-ID', ''), '<>');
+        return trim($this->getStringHeader('Content-ID'), '<>');
     }
 
     /**

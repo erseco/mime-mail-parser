@@ -43,6 +43,13 @@ jobs:
             exit 1
           }
 
+      - name: Execute static analysis
+        run: |
+          composer analyse > phpstan.log 2>&1 || {
+            tail -n 100 phpstan.log
+            exit 1
+          }
+
   test:
     runs-on: ubuntu-latest
     strategy:
