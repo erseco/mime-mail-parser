@@ -5,12 +5,6 @@
       <directory suffix="Test.php">./tests</directory>
     </testsuite>
   </testsuites>
-  <coverage>
-    <report>
-      <clover outputFile="coverage/clover.xml"/>
-      <text outputFile="coverage/coverage.txt"/>
-    </report>
-  </coverage>
   <source>
     <include>
       <directory suffix=".php">./src</directory>

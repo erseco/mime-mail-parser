@@ -20,7 +20,7 @@
     "scripts": {
         "test": "vendor/bin/pest",
         "test-with-warnings": "vendor/bin/pest --display-warnings",
-        "test-coverage": "vendor/bin/pest --coverage --min=75",
+        "test-coverage": "mkdir -p coverage && vendor/bin/pest --coverage --min=75 --coverage-clover=coverage/clover.xml",
         "lint": "phpcs --standard=phpcs.xml.dist --warning-severity=0",
         "fix": "phpcbf --standard=phpcs.xml.dist --warning-severity=0",
         "analyse": "phpstan analyse --memory-limit=512M"
