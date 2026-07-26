@@ -79,8 +79,11 @@ $firstPart = $parts[0];
 $firstPart->getHeaders();                 // array of all headers for this part
 $firstPart->getHeader('Content-Type');    // get specific header
 $firstPart->getContentType();             // 'text/html; charset="utf-8"'
-$firstPart->getContent();                 // '<html><body>....'
+$firstPart->getContent();                 // transfer-decoded content (no charset conversion)
+$firstPart->getContentAsUtf8();           // text/* parts converted to UTF-8 when possible
+$firstPart->getCharset();                 // charset from Content-Type, or null
 $firstPart->isHtml();                     // true if it's an HTML part
+
 $firstPart->isText();                     // true if it's a text part
 $firstPart->isAttachment();               // true if it's an attachment
 $firstPart->getFilename();                // name of the file if attachment

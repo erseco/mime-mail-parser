@@ -126,23 +126,42 @@ final class Rfc2047
         }
 
         if (function_exists('mb_convert_encoding')) {
-            $converted = @mb_convert_encoding($bytes, 'UTF-8', $normalized);
+            try {
+                set_error_handler(static function (): bool {
+                    return true;
+                });
 
-            if (is_string($converted) && $converted !== '') {
-                return $converted;
-            }
+                try {
+                    $converted = mb_convert_encoding($bytes, 'UTF-8', $normalized);
+                } finally {
+                    restore_error_handler();
+                }
 
-            // Empty string can be a valid conversion of empty input.
-            if (is_string($converted) && $bytes === '') {
-                return $converted;
+                if (is_string($converted) && ($converted !== '' || $bytes === '')) {
+                    return $converted;
+                }
+            } catch (\Throwable $exception) {
+                // Unknown charsets may throw on newer PHP versions.
             }
         }
 
         if (function_exists('iconv')) {
-            $converted = @iconv($normalized, 'UTF-8//IGNORE', $bytes);
+            try {
+                set_error_handler(static function (): bool {
+                    return true;
+                });
 
-            if (is_string($converted)) {
-                return $converted;
+                try {
+                    $converted = iconv($normalized, 'UTF-8//IGNORE', $bytes);
+                } finally {
+                    restore_error_handler();
+                }
+
+                if (is_string($converted)) {
+                    return $converted;
+                }
+            } catch (\Throwable $exception) {
+                // Unknown charsets may throw on newer PHP versions.
             }
         }
 

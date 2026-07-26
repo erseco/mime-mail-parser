@@ -81,6 +81,9 @@ class MessagePart implements \JsonSerializable
     /**
      * Get the decoded content of this message part.
      *
+     * Decodes Content-Transfer-Encoding only. Charset conversion is not applied.
+     * Use getContentAsUtf8() when UTF-8 text is required.
+     *
      * @return string The decoded content.
      */
     public function getContent(): string
@@ -98,6 +101,60 @@ class MessagePart implements \JsonSerializable
         }
 
         return $this->content;
+    }
+
+    /**
+     * Get transfer-decoded content converted to UTF-8 when the part is textual.
+     *
+     * Behaviour:
+     * - Decodes Content-Transfer-Encoding first (same as getContent()).
+     * - Converts only text/* parts using the Content-Type charset parameter.
+     * - Leaves binary/non-text parts unchanged.
+     * - Missing, unknown, or failed conversions return the transfer-decoded bytes.
+     *
+     * @return string UTF-8 text when conversion succeeds; otherwise decoded bytes.
+     */
+    public function getContentAsUtf8(): string
+    {
+        $content = $this->getContent();
+
+        if (!$this->isTextualPart()) {
+            return $content;
+        }
+
+        $charset = $this->getCharset();
+
+        if ($charset === null || $charset === '') {
+            return $content;
+        }
+
+        return $this->convertParameterCharset($content, $charset);
+    }
+
+    /**
+     * Read the charset parameter from Content-Type.
+     *
+     * @return string|null Charset name or null when absent.
+     */
+    public function getCharset(): ?string
+    {
+        $charset = $this->getHeaderParameter('Content-Type', 'charset');
+
+        if ($charset === null || $charset === '') {
+            return null;
+        }
+
+        return trim($charset, " \t\"'");
+    }
+
+    /**
+     * Whether this part is a textual MIME type eligible for charset conversion.
+     *
+     * @return bool True for text/* content types.
+     */
+    protected function isTextualPart(): bool
+    {
+        return str_starts_with(strtolower($this->getContentType()), 'text/');
     }
 
     /**
@@ -389,42 +446,88 @@ class MessagePart implements \JsonSerializable
      */
     protected function convertParameterCharset(string $bytes, string $charset): string
     {
-        if ($charset === '' || strcasecmp($charset, 'UTF-8') === 0) {
+        $normalized = strtoupper(str_replace('_', '-', trim($charset)));
+        $aliases = [
+            'UTF8' => 'UTF-8',
+            'US-ASCII' => 'ASCII',
+            'ISO8859-1' => 'ISO-8859-1',
+            'LATIN1' => 'ISO-8859-1',
+            'CP1252' => 'WINDOWS-1252',
+            'WIN-1252' => 'WINDOWS-1252',
+        ];
+        $normalized = $aliases[$normalized] ?? $normalized;
+
+        if (
+            $normalized === ''
+            || $normalized === 'UTF-8'
+            || $normalized === 'ASCII'
+        ) {
             return $bytes;
         }
 
-        // Reuse the RFC 2047 charset path by wrapping as a trivial B word.
-        // Decode only the charset conversion logic through a synthetic call.
-        if (function_exists('mb_convert_encoding')) {
-            $converted = @mb_convert_encoding($bytes, 'UTF-8', $charset);
+        if ($normalized === 'ISO-8859-1') {
+            return Rfc2047::decode('=?ISO-8859-1?B?' . base64_encode($bytes) . '?=');
+        }
 
-            if (is_string($converted) && ($converted !== '' || $bytes === '')) {
-                return $converted;
+        if ($normalized === 'WINDOWS-1252') {
+            return Rfc2047::decode('=?Windows-1252?B?' . base64_encode($bytes) . '?=');
+        }
+
+        $converted = $this->convertWithOptionalExtensions($bytes, $normalized);
+
+        return $converted ?? $bytes;
+    }
+
+    /**
+     * Attempt charset conversion using optional PHP extensions.
+     *
+     * @param string $bytes   Source bytes.
+     * @param string $charset Source charset name.
+     *
+     * @return string|null Converted UTF-8 string or null on failure.
+     */
+    protected function convertWithOptionalExtensions(string $bytes, string $charset): ?string
+    {
+        if (function_exists('mb_convert_encoding')) {
+            try {
+                set_error_handler(static function (): bool {
+                    return true;
+                });
+
+                try {
+                    $converted = mb_convert_encoding($bytes, 'UTF-8', $charset);
+                } finally {
+                    restore_error_handler();
+                }
+
+                if (is_string($converted) && ($converted !== '' || $bytes === '')) {
+                    return $converted;
+                }
+            } catch (\Throwable $exception) {
+                // Unknown charsets may throw; fall through.
             }
         }
 
         if (function_exists('iconv')) {
-            $converted = @iconv($charset, 'UTF-8//IGNORE', $bytes);
+            try {
+                set_error_handler(static function (): bool {
+                    return true;
+                });
 
-            if (is_string($converted)) {
-                return $converted;
+                try {
+                    $converted = iconv($charset, 'UTF-8//IGNORE', $bytes);
+                } finally {
+                    restore_error_handler();
+                }
+
+                if (is_string($converted)) {
+                    return $converted;
+                }
+            } catch (\Throwable $exception) {
+                // Unknown charsets may throw; fall through.
             }
         }
 
-        $normalized = strtoupper(str_replace('_', '-', $charset));
-
-        if ($normalized === 'ISO-8859-1' || $normalized === 'ISO8859-1' || $normalized === 'LATIN1') {
-            return Rfc2047::decode("=?ISO-8859-1?B?" . base64_encode($bytes) . "?=");
-        }
-
-        if (
-            $normalized === 'WINDOWS-1252'
-            || $normalized === 'CP1252'
-            || $normalized === 'WIN-1252'
-        ) {
-            return Rfc2047::decode("=?Windows-1252?B?" . base64_encode($bytes) . "?=");
-        }
-
-        return $bytes;
+        return null;
     }
 }
