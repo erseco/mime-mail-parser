@@ -5,4 +5,9 @@ composer.lock
 .aider*
 .env
 .phpunit.result.cache
+.phpunit.cache
 tester.php
+coverage/
+coverage.xml
+clover.xml
+*.cov

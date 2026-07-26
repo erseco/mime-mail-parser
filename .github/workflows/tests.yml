@@ -103,6 +103,38 @@ jobs:
             exit 1
           }
 
+  coverage:
+    runs-on: ubuntu-latest
+    name: Coverage
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress --quiet
+
+      - name: Execute coverage with threshold
+        run: |
+          composer test-coverage > coverage.log 2>&1 || {
+            tail -n 120 coverage.log
+            exit 1
+          }
+          tail -n 40 coverage.log
+
+      - name: Upload Clover report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-clover
+          path: coverage/clover.xml
+          if-no-files-found: error
+
   consumer:
     runs-on: ubuntu-latest
     name: Consumer installation
