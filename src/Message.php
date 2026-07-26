@@ -43,7 +43,6 @@ class Message implements \JsonSerializable
     {
         $this->message = $message;
         $this->ignoreSignature = $ignoreSignature;
-
         $this->parse();
     }
 
@@ -104,10 +103,6 @@ class Message implements \JsonSerializable
     /**
      * Get a specific header value from the email message.
      *
-     * Header names are matched case-insensitively. Repeated header values are
-     * joined with a newline for backwards compatibility; use getHeaderValues()
-     * to retrieve them separately.
-     *
      * @param string $header  The name of the header to retrieve.
      * @param mixed  $default Default value if the header is not found.
      *
@@ -129,7 +124,7 @@ class Message implements \JsonSerializable
      *
      * @param string $header The name of the header to retrieve.
      *
-     * @return array<int, string> The header values.
+     * @return array<int, string> Header values.
      */
     public function getHeaderValues(string $header): array
     {
@@ -143,9 +138,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the Content-Type header of the email message.
+     * Get the Content-Type header.
      *
-     * @return string The content type or an empty string if not found.
+     * @return string Content type or an empty string.
      */
     public function getContentType(): string
     {
@@ -153,9 +148,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the Message-ID of the email.
+     * Get the Message-ID without angle brackets.
      *
-     * @return string The message ID without angle brackets.
+     * @return string Message ID.
      */
     public function getId(): string
     {
@@ -163,9 +158,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the email subject.
+     * Get the message subject.
      *
-     * @return string The subject line or an empty string if not found.
+     * @return string Subject.
      */
     public function getSubject(): string
     {
@@ -173,9 +168,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the sender header.
+     * Get the From header.
      *
-     * @return string The From header value or an empty string if not found.
+     * @return string Sender header.
      */
     public function getFrom(): string
     {
@@ -183,9 +178,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the recipient header.
+     * Get the To header.
      *
-     * @return string The To header value or an empty string if not found.
+     * @return string Recipient header.
      */
     public function getTo(): string
     {
@@ -193,9 +188,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the reply-to header.
+     * Get the Reply-To header.
      *
-     * @return string The Reply-To header value or an empty string if not found.
+     * @return string Reply-To header.
      */
     public function getReplyTo(): string
     {
@@ -203,9 +198,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the date when the email was sent.
+     * Get the message date.
      *
-     * @return \DateTime|null DateTime object of the email date or null if invalid.
+     * @return \DateTime|null Parsed date or null.
      */
     public function getDate(): ?\DateTime
     {
@@ -225,7 +220,7 @@ class Message implements \JsonSerializable
     /**
      * Get all message parts.
      *
-     * @return MessagePart[] Array of all message parts.
+     * @return MessagePart[] Message parts.
      */
     public function getParts(): array
     {
@@ -233,9 +228,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the HTML part of the message if available.
+     * Get the first HTML part.
      *
-     * @return MessagePart|null The HTML message part or null if not found.
+     * @return MessagePart|null HTML part.
      */
     public function getHtmlPart(): ?MessagePart
     {
@@ -249,9 +244,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the plain text part of the message if available.
+     * Get the first plain-text part.
      *
-     * @return MessagePart|null The text message part or null if not found.
+     * @return MessagePart|null Text part.
      */
     public function getTextPart(): ?MessagePart
     {
@@ -265,9 +260,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the attachments of a message.
+     * Get attachment parts.
      *
-     * @return MessagePart[]
+     * @return MessagePart[] Attachments.
      */
     public function getAttachments(): array
     {
@@ -280,9 +275,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Get the total size of the email message in bytes.
+     * Get the raw message size.
      *
-     * @return int Size of the message in bytes.
+     * @return int Size in bytes.
      */
     public function getSize(): int
     {
@@ -290,9 +285,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Convert the message to an array representation.
+     * Convert the message to an array.
      *
-     * @return array<string, mixed> Array containing message data.
+     * @return array<string, mixed> Message data.
      */
     public function toArray(): array
     {
@@ -314,9 +309,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Specify data which should be serialized to JSON.
+     * Specify JSON data.
      *
-     * @return array<string, mixed> Array containing message data.
+     * @return array<string, mixed> Message data.
      */
     public function jsonSerialize(): mixed
     {
@@ -324,7 +319,7 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Parse the email message into headers and body parts.
+     * Parse the raw message.
      *
      * @return void
      */
@@ -333,9 +328,7 @@ class Message implements \JsonSerializable
         [$headerBlock, $body] = $this->splitHeaderAndBody(
             $this->removeLeadingNoise($this->message)
         );
-
         $this->headers = $this->parseHeaders($headerBlock);
-
         $contentType = $this->getContentType();
         $isMultipart = str_starts_with(strtolower($contentType), 'multipart/');
         $this->boundary = $this->extractParameter($contentType, 'boundary');
@@ -368,34 +361,28 @@ class Message implements \JsonSerializable
 
         if ($contentTypeKey !== null) {
             $this->headers[$contentTypeKey] = $partHeaders[$contentTypeKey];
-        }
-
-        if ($contentTypeKey === null) {
+        } else {
             $partHeaders['Content-Type'] = 'text/plain; charset=us-ascii';
         }
 
-        if ($body !== '' || $partHeaders !== []) {
-            $this->addPart($this->trimPartLineEndings($body), $partHeaders);
-        }
+        $this->addPart($this->trimPartLineEndings($body), $partHeaders);
     }
 
     /**
-     * Add a new message part to the parts array.
+     * Add a parsed message part.
      *
-     * @param string                $currentBody        The content of the message part.
-     * @param array<string, string> $currentBodyHeaders The headers for this message part.
+     * @param string                $body    Part body.
+     * @param array<string, string> $headers Part headers.
      *
      * @return void
      */
-    protected function addPart(string $currentBody, array $currentBodyHeaders): void
+    protected function addPart(string $body, array $headers): void
     {
-        $contentTypeKey = $this->findHeaderKey($currentBodyHeaders, 'Content-Type');
-        $contentType = $contentTypeKey === null ? '' : $currentBodyHeaders[$contentTypeKey];
+        $contentTypeKey = $this->findHeaderKey($headers, 'Content-Type');
+        $contentType = $contentTypeKey === null ? '' : $this->unfoldHeaderValue($headers[$contentTypeKey]);
 
         if (str_starts_with(strtolower($contentType), 'multipart/')) {
-            $innerMessage = $this->buildHeaderBlock($currentBodyHeaders)
-                . "\r\n\r\n"
-                . $currentBody;
+            $innerMessage = $this->buildHeaderBlock($headers) . "\r\n\r\n" . $body;
             $innerParser = new self($innerMessage, $this->ignoreSignature);
 
             foreach ($innerParser->getParts() as $innerPart) {
@@ -406,10 +393,10 @@ class Message implements \JsonSerializable
         }
 
         if ($this->ignoreSignature && str_starts_with(strtolower($contentType), 'text/plain')) {
-            $currentBody = $this->stripSignature($currentBody);
+            $body = $this->stripSignature($body);
         }
 
-        $this->parts[] = new MessagePart($currentBody, $currentBodyHeaders);
+        $this->parts[] = new MessagePart($body, $headers);
     }
 
     /**
@@ -456,9 +443,9 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Split a raw message or MIME part into headers and body.
+     * Split headers and body at the first blank line.
      *
-     * @param string $message Raw message content.
+     * @param string $message Raw message or MIME part.
      *
      * @return array{0: string, 1: string} Header block and body.
      */
@@ -478,11 +465,11 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Remove mbox lines or other content preceding the first valid header.
+     * Remove content preceding the first valid header.
      *
-     * @param string $message Raw message content.
+     * @param string $message Raw message.
      *
-     * @return string Message starting at the first header.
+     * @return string Message beginning with a header.
      */
     protected function removeLeadingNoise(string $message): string
     {
@@ -505,12 +492,15 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Split a multipart body into raw child parts.
+     * Split a multipart body into child parts.
+     *
+     * Correct messages use delimiter-only lines. A fallback keeps support for
+     * malformed messages where boundaries are concatenated with the content.
      *
      * @param string $body     Multipart body.
      * @param string $boundary Multipart boundary.
      *
-     * @return array<int, string> Raw MIME parts.
+     * @return array<int, string> Raw child parts.
      */
     protected function splitMultipartBody(string $body, string $boundary): array
     {
@@ -519,6 +509,7 @@ class Message implements \JsonSerializable
         $parts = [];
         $currentLines = [];
         $collecting = false;
+        $foundClosingDelimiter = false;
 
         foreach ($lines as $line) {
             $trimmedLine = rtrim($line, "\t ");
@@ -530,6 +521,7 @@ class Message implements \JsonSerializable
                 }
 
                 if ($trimmedLine === $delimiter . '--') {
+                    $foundClosingDelimiter = true;
                     break;
                 }
 
@@ -546,11 +538,11 @@ class Message implements \JsonSerializable
             $parts[] = implode("\n", $currentLines);
         }
 
-        if ($parts !== []) {
+        if ($parts !== [] && ($foundClosingDelimiter || substr_count($body, $delimiter) === 1)) {
             return $parts;
         }
 
-        // Compatibility fallback for malformed messages with inline boundaries.
+        $parts = [];
         $chunks = explode($delimiter, $body);
 
         foreach (array_slice($chunks, 1) as $chunk) {
@@ -558,8 +550,7 @@ class Message implements \JsonSerializable
                 break;
             }
 
-            $chunk = ltrim($chunk, "\r\n");
-            $chunk = rtrim($chunk, "\r\n");
+            $chunk = trim($chunk, "\r\n");
 
             if ($chunk !== '') {
                 $parts[] = $chunk;
@@ -570,7 +561,7 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Extract a parameter from a structured MIME header.
+     * Extract a parameter from a MIME header.
      *
      * @param string $header    Header value.
      * @param string $parameter Parameter name.
@@ -593,11 +584,11 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Infer a missing or malformed boundary from the first delimiter line.
+     * Infer a boundary from a delimiter line.
      *
      * @param string $body Multipart body.
      *
-     * @return string|null Inferred boundary.
+     * @return string|null Boundary.
      */
     protected function inferBoundary(string $body): ?string
     {
@@ -609,7 +600,7 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Extract MIME content headers for a single-part message.
+     * Extract Content-* headers from message headers.
      *
      * @param array<string, string> $headers Message headers.
      *
@@ -625,12 +616,12 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Find the original array key for a case-insensitive header name.
+     * Find a case-insensitive header key.
      *
-     * @param array<string, string> $headers Headers to search.
+     * @param array<string, string> $headers Headers.
      * @param string                $header  Header name.
      *
-     * @return string|null Original header key.
+     * @return string|null Original key.
      */
     protected function findHeaderKey(array $headers, string $header): ?string
     {
@@ -646,9 +637,9 @@ class Message implements \JsonSerializable
     /**
      * Unfold a header value according to RFC 5322.
      *
-     * @param string $value Raw header value.
+     * @param string $value Raw value.
      *
-     * @return string Unfolded header value.
+     * @return string Unfolded value.
      */
     protected function unfoldHeaderValue(string $value): string
     {
@@ -656,11 +647,11 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Build a raw header block from parsed headers.
+     * Build a raw header block.
      *
      * @param array<string, string> $headers Parsed headers.
      *
-     * @return string Raw header block.
+     * @return string Header block.
      */
     protected function buildHeaderBlock(array $headers): string
     {
@@ -674,11 +665,11 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Remove only MIME framing line endings from a part body.
+     * Remove MIME framing line endings from a body.
      *
      * @param string $body Part body.
      *
-     * @return string Part body without framing line endings.
+     * @return string Body without framing line endings.
      */
     protected function trimPartLineEndings(string $body): string
     {
@@ -686,11 +677,11 @@ class Message implements \JsonSerializable
     }
 
     /**
-     * Strip the email signature from a body string.
+     * Strip the plain-text signature delimiter and following content.
      *
-     * @param string $body The body content to strip the signature from.
+     * @param string $body Plain-text body.
      *
-     * @return string The body without the signature.
+     * @return string Body without signature.
      */
     protected function stripSignature(string $body): string
     {
