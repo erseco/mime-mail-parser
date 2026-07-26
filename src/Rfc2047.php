@@ -212,6 +212,7 @@ final class Rfc2047
      */
     private static function windows1252ToUtf8(string $bytes): string
     {
+        /** @var array<int, string> $map */
         static $map = [
             0x80 => "\xE2\x82\xAC",
             0x82 => "\xE2\x80\x9A",
@@ -253,7 +254,7 @@ final class Rfc2047
                 continue;
             }
 
-            if (isset($map[$code])) {
+            if (array_key_exists($code, $map)) {
                 $result .= $map[$code];
                 continue;
             }
