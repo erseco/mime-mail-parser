@@ -2,17 +2,23 @@ name: Tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
         php: [8.5, 8.4, 8.3, 8.2, 8.1, 8.0]
         stability: [prefer-stable]
 
-    name: P${{ matrix.php }} - ${{ matrix.stability }} - ${{ matrix.os }}
+    name: PHP ${{ matrix.php }} - ${{ matrix.stability }}
 
     steps:
       - name: Checkout code
@@ -22,17 +28,49 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, imagick, fileinfo
           coverage: none
 
-      - name: Setup problem matchers
-        run: |
-          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
-          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
-      - name: Install dependencies
-        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+      - name: Validate Composer configuration
+        run: composer validate --strict
 
-      - name: Execute Linter
+      - name: Install dependencies
+        run: composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: Verify PSR-4 autoloading
+        run: composer dump-autoload --optimize --strict-psr
+
+      - name: Audit dependencies
+        run: composer audit
+
+      - name: Execute linter
+        run: composer lint
+
+      - name: Execute Pest tests
+        run: composer test
+
+      - name: Execute consumer smoke test
+        run: |
+          php -r 'require "vendor/autoload.php"; $message = Erseco\Message::fromString("Subject: Smoke test\r\nContent-Type: text/plain\r\n\r\nBody"); exit($message->getSubject() === "Smoke test" ? 0 : 1);'
+
+  lowest-dependencies:
+    runs-on: ubuntu-latest
+
+    name: PHP 8.0 - prefer-lowest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          coverage: none
+
+      - name: Install lowest supported dependencies
+        run: composer update --prefer-lowest --prefer-stable --prefer-dist --no-interaction --no-progress
+
+      - name: Execute linter
         run: composer lint
 
       - name: Execute Pest tests
