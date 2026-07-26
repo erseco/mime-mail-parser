@@ -10,9 +10,7 @@
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
-namespace Erseco\Message\Tests\Unit;
-
-require_once __DIR__ . '/../../src/MimeMailParser.php';
+namespace Tests\Unit;
 
 use Erseco\Message;
 
