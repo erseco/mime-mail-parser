@@ -49,3 +49,14 @@ composer bench
 ```
 
 Benchmarks are intentionally informational rather than a CI gate because shared runners are too variable for stable performance thresholds.
+
+
+## Release process
+
+For v1.1.0:
+
+1. Merge the stacked pull requests in dependency order.
+2. Confirm the `main` workflow is green, including the 90% coverage gate.
+3. Replace `Unreleased` in `CHANGELOG.md` with the release date.
+4. Create and push the annotated `v1.1.0` tag from the resulting `main` commit.
+5. Let the release workflow build the archive and create the GitHub release.
