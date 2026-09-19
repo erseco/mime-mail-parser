@@ -119,7 +119,6 @@ class Message implements \JsonSerializable
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
         }
 
-        $options = $options ?? ParserOptions::defaults();
         $handle = fopen($path, 'rb');
 
         if ($handle === false) {
@@ -127,16 +126,52 @@ class Message implements \JsonSerializable
         }
 
         try {
-            $readLimit = $options->maxMessageBytes < PHP_INT_MAX
-                ? $options->maxMessageBytes + 1
-                : $options->maxMessageBytes;
-            $message = stream_get_contents($handle, $readLimit);
+            return self::fromStream($handle, $ignoreSignature, $options);
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * Create a Message instance from a readable stream.
+     *
+     * The caller retains ownership of the stream. Its current position is used
+     * as the start of the message and the stream is left open.
+     *
+     * @param resource           $stream          Readable stream resource.
+     * @param bool               $ignoreSignature Whether to ignore message signatures.
+     * @param ParserOptions|null $options         Optional safety limits.
+     *
+     * @throws \InvalidArgumentException      When the supplied value is not a stream resource.
+     * @throws \RuntimeException              When the stream cannot be read.
+     * @throws ParserLimitExceededException   When the stream exceeds maxMessageBytes.
+     *
+     * @return self
+     */
+    public static function fromStream(
+        $stream,
+        bool $ignoreSignature = false,
+        ?ParserOptions $options = null
+    ): self {
+        if (!is_resource($stream) || get_resource_type($stream) !== 'stream') {
+            throw new \InvalidArgumentException('Expected a readable stream resource.');
+        }
+
+        $metadata = stream_get_meta_data($stream);
+        $mode = $metadata['mode'];
+
+        if ($mode !== '' && !strpbrk($mode, 'r+')) {
+            throw new \InvalidArgumentException('Expected a readable stream resource.');
+        }
+
+        $options = $options ?? ParserOptions::defaults();
+        $readLimit = $options->maxMessageBytes < PHP_INT_MAX
+            ? $options->maxMessageBytes + 1
+            : $options->maxMessageBytes;
+        $message = stream_get_contents($stream, $readLimit);
 
         if ($message === false) {
-            throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
+            throw new \RuntimeException('Unable to read email message from stream.');
         }
 
         $messageSize = strlen($message);
