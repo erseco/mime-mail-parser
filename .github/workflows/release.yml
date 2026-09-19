@@ -1,18 +1,24 @@
 ---
-name: Release
+name: Release assets
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
 
 jobs:
   build:
+    if: startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout release tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -20,21 +26,19 @@ jobs:
           php-version: '8.2'
           coverage: none
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress
-
-      - name: Get tag
-        id: tag
-        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Validate Composer configuration
+        run: composer validate --strict
 
       - name: Create package
-        run: composer archive --format=zip --file="mime-mail-parser-${{ steps.tag.outputs.tag }}"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: composer archive --format=zip --file="mime-mail-parser-${RELEASE_TAG}"
 
-      - name: Create release
+      - name: Upload package to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          gh release create "${{ steps.tag.outputs.tag }}" \
-            "mime-mail-parser-${{ steps.tag.outputs.tag }}.zip" \
-            --generate-notes \
-            --title "${{ steps.tag.outputs.tag }}"
+          gh release upload "${RELEASE_TAG}" \
+            "mime-mail-parser-${RELEASE_TAG}.zip" \
+            --clobber
