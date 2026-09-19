@@ -38,3 +38,14 @@ The coverage suite must remain at or above 90%.
 ## Security issues
 
 Do not open public issues for suspected vulnerabilities. Follow [SECURITY.md](SECURITY.md).
+
+
+## Benchmarks
+
+Run the lightweight parser benchmark harness with:
+
+```bash
+composer bench
+```
+
+Benchmarks are intentionally informational rather than a CI gate because shared runners are too variable for stable performance thresholds.
