@@ -11,7 +11,4 @@ declare(strict_types=1);
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
-
-declare(strict_types=1);
-
 require_once __DIR__ . '/Message.php';
