@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Exception thrown when a parser safety limit is exceeded.
  *
