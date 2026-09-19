@@ -29,7 +29,7 @@ Has not been fully tested against RFC 5322.
 
 ### Requirements
 
-- **PHP 8.0+**
+- **PHP 8.2+**
 
 ### Installation
 
