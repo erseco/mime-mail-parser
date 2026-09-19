@@ -1,0 +1,21 @@
+From: Apple Sender <sender@example.com>
+To: Receiver <receiver@example.com>
+Subject: Apple Mail sample
+Date: Sat, 19 Sep 2026 11:00:00 +0000
+Message-ID: <apple-mail-example@example.com>
+Mime-Version: 1.0 (Mac OS X Mail)
+X-Mailer: Apple Mail
+Content-Type: multipart/mixed; boundary="Apple-Mail=_boundary"
+
+--Apple-Mail=_boundary
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+
+Hello from Apple Mail.
+--Apple-Mail=_boundary
+Content-Disposition: attachment; filename="notes.txt"
+Content-Type: text/plain; name="notes.txt"
+Content-Transfer-Encoding: base64
+
+QXBwbGUgTWFpbCBhdHRhY2htZW50
+--Apple-Mail=_boundary--

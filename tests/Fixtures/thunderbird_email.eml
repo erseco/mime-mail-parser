@@ -1,0 +1,21 @@
+From: Thunderbird Sender <sender@example.com>
+To: "Doe, Jane" <jane@example.com>
+Subject: Thunderbird sample
+Date: Sat, 19 Sep 2026 12:00:00 +0000
+Message-ID: <thunderbird-example@example.com>
+User-Agent: Mozilla Thunderbird
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="------------thunderbird-boundary"
+
+--------------thunderbird-boundary
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Hello from Thunderbird.
+--------------thunderbird-boundary
+Content-Type: text/html; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+<html><body>Hello from <strong>Thunderbird</strong>.</body></html>
+--------------thunderbird-boundary--

@@ -1,0 +1,21 @@
+From: "Example Sender" <sender@example.com>
+To: Recipient <recipient@example.com>
+Cc: Team <team@example.com>
+Subject: =?UTF-8?Q?Outlook_style_message?=
+Date: Sat, 19 Sep 2026 10:00:00 +0000
+Message-ID: <outlook-example@example.com>
+MIME-Version: 1.0
+X-Mailer: Microsoft Outlook
+Content-Type: multipart/alternative; boundary="_000_outlook_boundary_"
+
+--_000_outlook_boundary_
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+Plain Outlook body.
+--_000_outlook_boundary_
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+
+<html><body><p>HTML Outlook body.</p></body></html>
+--_000_outlook_boundary_--
