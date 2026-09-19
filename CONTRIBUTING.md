@@ -31,6 +31,7 @@ The coverage suite must remain at or above 90%.
 - Add or update tests for behaviour changes.
 - Keep backwards compatibility unless the change is explicitly intended for a major release.
 - Include real-world or malformed MIME fixtures when they help reproduce a parser issue.
+- Keep fuzz cases deterministic so CI failures are reproducible.
 - Keep public API changes documented in the README.
 - Ensure Composer validation, coding standards, static analysis, tests, and coverage pass.
 
