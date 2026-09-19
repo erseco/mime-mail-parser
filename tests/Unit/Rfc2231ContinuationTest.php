@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Tests for RFC 2231 continued filename parameters.
  *
