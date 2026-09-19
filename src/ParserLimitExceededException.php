@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Exception thrown when a parser safety limit is exceeded.
  *
@@ -11,6 +9,9 @@ declare(strict_types=1);
  * @license  MIT https://opensource.org/licenses/MIT
  * @link     https://github.com/erseco/mime-mail-parser
  */
+
+declare(strict_types=1);
+
 namespace Erseco;
 
 /**
