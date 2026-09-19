@@ -34,7 +34,16 @@ jobs:
         run: composer dump-autoload --optimize --strict-psr --quiet
 
       - name: Audit dependencies
-        run: composer audit
+        run: |
+          for attempt in 1 2 3; do
+            composer audit && exit 0
+
+            if [ "$attempt" -lt 3 ]; then
+              sleep 5
+            fi
+          done
+
+          exit 1
 
       - name: Execute linter
         run: |
