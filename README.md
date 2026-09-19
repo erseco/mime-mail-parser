@@ -1,6 +1,6 @@
 <div align="center">
     <p>
-        <h1>Mime Mail Parser for PHP<br/>Simple, fast, no extensions required</h1>
+        <h1>Mime Mail Parser for PHP<br/>Simple, fast, no extensions required, based on [opcodesio/mail-parser](https://github.com/opcodesio/mail-parser)</h1>
     </p>
 </div>
 
@@ -23,7 +23,20 @@
 
 **Mime Mail Parser** has a very simple API to parse emails and their MIME contents. Unlike many other parsers out there, this package does not require the [mailparse](https://www.php.net/manual/en/book.mailparse.php) PHP extension.
 
-Has not been fully tested against RFC 5322.
+The parser intentionally favours practical compatibility with real-world email while keeping bounded resource usage. It does not claim full RFC 5322 conformance.
+
+### Standards support
+
+| Standard / feature | Support |
+| --- | --- |
+| RFC 5322 message headers and body | Partial, practical parsing |
+| RFC 2045 MIME structure and transfer encodings | Supported for common multipart, base64, and quoted-printable messages |
+| RFC 2047 encoded header words | Supported |
+| RFC 2231 extended and continued parameters | Supported |
+| Charset conversion for text parts | Supported when conversion is available, with built-in ISO-8859-1 and Windows-1252 fallbacks |
+| Nested multipart messages | Supported with configurable depth and part limits |
+| Malformed real-world MIME input | Best-effort compatibility with explicit safety limits |
+
 
 ## Get Started
 
