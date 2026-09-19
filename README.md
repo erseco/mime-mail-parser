@@ -7,7 +7,8 @@
 <p align="center">
     <a href="#features">Features</a> |
     <a href="#installation">Installation</a> |
-    <a href="#credits">Credits</a>
+    <a href="#credits">Credits</a> |
+    <a href="CHANGELOG.md">Changelog</a>
 </p>
 
 <p align="center">
