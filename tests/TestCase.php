@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Base TestCase class for MimeMailParser tests
  *
