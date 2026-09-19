@@ -151,6 +151,18 @@ jobs:
           path: coverage/clover.xml
           if-no-files-found: error
 
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: Dependency review
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+
   consumer:
     runs-on: ubuntu-latest
     name: Consumer installation
