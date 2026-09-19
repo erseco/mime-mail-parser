@@ -158,8 +158,9 @@ class Message implements \JsonSerializable
         }
 
         $metadata = stream_get_meta_data($stream);
+        $mode = $metadata['mode'];
 
-        if (($metadata['mode'] ?? '') !== '' && !strpbrk((string) $metadata['mode'], 'r+')) {
+        if ($mode !== '' && !strpbrk($mode, 'r+')) {
             throw new \InvalidArgumentException('Expected a readable stream resource.');
         }
 
