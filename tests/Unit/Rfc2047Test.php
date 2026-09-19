@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Erseco\Message;
+use Erseco\Rfc2047;
 
 it(
     'keeps getHeader raw while decoding UTF-8 base64 subjects',
@@ -125,5 +126,33 @@ it(
         $message = Message::fromString("Subject: Hello\r\n\r\nBody");
 
         expect($message->getDecodedHeader('X-Missing', 'fallback'))->toBe('fallback');
+    }
+);
+
+
+it(
+    'covers the extension-free ISO-8859-1 conversion fallback',
+    function () {
+        $method = new \ReflectionMethod(Rfc2047::class, 'iso88591ToUtf8');
+
+        expect($method->invoke(null, "ASCII \xE9"))->toBe('ASCII é');
+    }
+);
+
+it(
+    'covers the extension-free Windows-1252 conversion fallback',
+    function () {
+        $method = new \ReflectionMethod(Rfc2047::class, 'windows1252ToUtf8');
+        $bytes = "A\x80\x81\xE9";
+
+        expect($method->invoke(null, $bytes))->toBe("A€\xC2\x81é");
+    }
+);
+
+
+it(
+    'preserves invalid base64 encoded words',
+    function () {
+        expect(Rfc2047::decode('=?UTF-8?B?%%%?='))->toBe('=?UTF-8?B?%%%?=');
     }
 );
