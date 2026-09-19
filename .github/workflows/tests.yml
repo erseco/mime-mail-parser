@@ -128,6 +128,13 @@ jobs:
           }
           tail -n 40 coverage.log
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage/clover.xml
+          disable_search: true
+          fail_ci_if_error: true
+
       - name: Upload Clover report
         uses: actions/upload-artifact@v7
         with:
