@@ -101,6 +101,9 @@ $message->getHeader('Content-Type');    // get specific header (raw unfolded val
 $message->getContentType();             // 'multipart/mixed; boundary="----=_Part_1_1234567890"'
 $message->getFrom();                    // 'Service <service@example.com>'
 $message->getTo();                      // 'John Doe <johndoe@example.com>'
+$message->getCc();
+$message->getBcc();
+$message->getMessageId();                // alias of getId()
 $message->getSubject();                 // raw subject (may still contain RFC 2047 encoded words)
 $message->getDate();                    // DateTime object when the email was sent
 
@@ -113,6 +116,15 @@ $message->getDecodedSubject();          // same as getDecodedHeader('Subject')
 $message->getDecodedFrom();
 $message->getDecodedTo();
 $message->getDecodedReplyTo();
+$message->getDecodedCc();
+$message->getDecodedBcc();
+
+// Structured mailbox addresses
+$message->getFromAddresses();            // list<Address>
+$message->getToAddresses();
+$message->getCcAddresses();
+$message->getBccAddresses();
+$message->getReplyToAddresses();
 
 
 $message->getParts();       // Returns array of MessagePart objects

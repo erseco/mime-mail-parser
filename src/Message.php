@@ -275,6 +275,16 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get the Message-ID without angle brackets.
+     *
+     * @return string Message ID.
+     */
+    public function getMessageId(): string
+    {
+        return $this->getId();
+    }
+
+    /**
      * Get the message subject.
      *
      * @return string Subject.
@@ -302,6 +312,26 @@ class Message implements \JsonSerializable
     public function getTo(): string
     {
         return $this->getStringHeader('To');
+    }
+
+    /**
+     * Get the Cc header.
+     *
+     * @return string Cc header.
+     */
+    public function getCc(): string
+    {
+        return $this->getStringHeader('Cc');
+    }
+
+    /**
+     * Get the Bcc header.
+     *
+     * @return string Bcc header.
+     */
+    public function getBcc(): string
+    {
+        return $this->getStringHeader('Bcc');
     }
 
     /**
@@ -367,6 +397,26 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get the Cc header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded Cc header.
+     */
+    public function getDecodedCc(): string
+    {
+        return $this->getDecodedStringHeader('Cc');
+    }
+
+    /**
+     * Get the Bcc header with RFC 2047 decoding applied.
+     *
+     * @return string Decoded Bcc header.
+     */
+    public function getDecodedBcc(): string
+    {
+        return $this->getDecodedStringHeader('Bcc');
+    }
+
+    /**
      * Get the Reply-To header with RFC 2047 decoding applied.
      *
      * @return string Decoded Reply-To header.
@@ -374,6 +424,56 @@ class Message implements \JsonSerializable
     public function getDecodedReplyTo(): string
     {
         return $this->getDecodedStringHeader('Reply-To');
+    }
+
+    /**
+     * Get structured From addresses.
+     *
+     * @return list<Address>
+     */
+    public function getFromAddresses(): array
+    {
+        return Address::parseList($this->getDecodedFrom());
+    }
+
+    /**
+     * Get structured To addresses.
+     *
+     * @return list<Address>
+     */
+    public function getToAddresses(): array
+    {
+        return Address::parseList($this->getDecodedTo());
+    }
+
+    /**
+     * Get structured Cc addresses.
+     *
+     * @return list<Address>
+     */
+    public function getCcAddresses(): array
+    {
+        return Address::parseList($this->getDecodedCc());
+    }
+
+    /**
+     * Get structured Bcc addresses.
+     *
+     * @return list<Address>
+     */
+    public function getBccAddresses(): array
+    {
+        return Address::parseList($this->getDecodedBcc());
+    }
+
+    /**
+     * Get structured Reply-To addresses.
+     *
+     * @return list<Address>
+     */
+    public function getReplyToAddresses(): array
+    {
+        return Address::parseList($this->getDecodedReplyTo());
     }
 
     /**
