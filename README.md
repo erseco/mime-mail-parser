@@ -62,7 +62,7 @@ use Erseco\MimeMailParser\MessagePart;
 use Erseco\MimeMailParser\ParserOptions;
 ```
 
-Legacy class names such as `Erseco\Message` and `Erseco\MessagePart` remain available as compatibility aliases. New code should use the canonical namespace so a future major release can remove those aliases cleanly.
+Legacy class names such as `Erseco\Message`, `Erseco\MessagePart`, and `Erseco\ParserOptions` remain available as compatibility aliases. They are provided for backwards compatibility only; new code should use the canonical namespace.
 
 ### Usage
 
