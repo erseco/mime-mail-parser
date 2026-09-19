@@ -12,6 +12,8 @@ declare(strict_types=1);
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
+declare(strict_types=1);
+
 namespace Erseco;
 
 /**
