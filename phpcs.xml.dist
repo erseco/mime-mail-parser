@@ -13,6 +13,7 @@
 
     <rule ref="PSR12">
         <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
+        <exclude name="PSR12.Files.FileHeader.IncorrectGrouping"/>
     </rule>
 
     <rule ref="Generic.Files.LineLength">
