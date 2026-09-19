@@ -11,7 +11,9 @@
     <arg value="sp"/>
     <arg name="extensions" value="php"/>
 
-    <rule ref="PSR12"/>
+    <rule ref="PSR12">
+        <exclude name="PSR12.Files.FileHeader.IncorrectOrder"/>
+    </rule>
 
     <rule ref="Generic.Files.LineLength">
         <properties>
