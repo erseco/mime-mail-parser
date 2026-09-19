@@ -146,3 +146,97 @@ it(
             ->and($message->getTextPart()?->getContent())->toBe('Body');
     }
 );
+
+
+it(
+    'parses messages with mixed line endings',
+    function () {
+        $message = Message::fromString(
+            "From: sender@example.com\r\n"
+            . "Subject: Mixed endings\n"
+            . "Content-Type: text/plain\r\r"
+            . "Body"
+        );
+
+        expect($message->getFrom())->toBe('sender@example.com')
+            ->and($message->getSubject())->toBe('Mixed endings')
+            ->and($message->getTextPart()?->getContent())->toBe('Body');
+    }
+);
+
+it(
+    'keeps the final multipart part when the closing boundary is missing',
+    function () {
+        $message = Message::fromString(
+            "Content-Type: multipart/mixed; boundary=missing-close\r\n\r\n"
+            . "--missing-close\r\n"
+            . "Content-Type: text/plain\r\n\r\n"
+            . "First\r\n"
+            . "--missing-close\r\n"
+            . "Content-Type: text/plain\r\n\r\n"
+            . "Second"
+        );
+
+        expect($message->getParts())->toHaveCount(2)
+            ->and($message->getParts()[0]->getContent())->toBe('First')
+            ->and($message->getParts()[1]->getContent())->toBe('Second');
+    }
+);
+
+it(
+    'ignores malformed header lines without losing valid headers',
+    function () {
+        $message = Message::fromString(
+            "Subject: Valid\r\n"
+            . "this is not a header\r\n"
+            . "X-Test: value\r\n\r\n"
+            . "Body"
+        );
+
+        expect($message->getSubject())->toBe('Valid')
+            ->and($message->getHeader('X-Test'))->toBe('value');
+    }
+);
+
+it(
+    'handles an empty message without throwing',
+    function () {
+        $message = Message::fromString('');
+
+        expect($message->getHeaders())->toBe([])
+            ->and($message->getParts())->toHaveCount(1)
+            ->and($message->getTextPart()?->getContent())->toBe('');
+    }
+);
+
+
+it(
+    'covers additional public edge cases',
+    function () {
+        $message = Message::fromString(
+            "Date: definitely-not-a-date\r\n"
+            . "Content-Type: application/octet-stream\r\n\r\n"
+            . "payload"
+        );
+
+        expect($message->getHeaderValues('X-Missing'))->toBe([])
+            ->and($message->getDecodedHeader('X-Missing', []))->toBe([])
+            ->and($message->getDate())->toBeNull()
+            ->and($message->getHtmlPart())->toBeNull()
+            ->and($message->getTextPart())->toBeNull();
+
+        $part = new MessagePart(
+            'image-data',
+            [
+                'Content-Type' => 'image/png',
+                'Content-Disposition' => 'inline; filename="pixel.png"',
+                'Content-ID' => '<pixel@example.com>',
+            ]
+        );
+
+        expect($part->isImage())->toBeTrue()
+            ->and($part->getSize())->toBe(10)
+            ->and($part->toArray()['filename'])->toBe('pixel.png')
+            ->and($part->jsonSerialize()['content_id'])->toBe('pixel@example.com');
+    }
+);
