@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Compatibility and edge-case tests for the MIME mail parser.
  *

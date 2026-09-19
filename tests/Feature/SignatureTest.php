@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Signature ignore tests for MimeMailParser class
  *
