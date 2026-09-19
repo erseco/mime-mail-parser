@@ -12,4 +12,6 @@ declare(strict_types=1);
  * @link     https://github.com/erseco/mime-mail-parser
  */
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/Message.php';
