@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Shared mutable parser state for nested MIME parsing.
  *
