@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Configurable safety limits for the MIME message parser.
  *
