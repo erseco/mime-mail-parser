@@ -76,6 +76,10 @@ $message = Message::fromString($rawEmail);
 // Or parse from a file directly
 $message = Message::fromFile('/path/to/email.eml');
 
+// Or parse from any readable PHP stream
+$stream = fopen('/path/to/email.eml', 'rb');
+$message = Message::fromStream($stream);
+
 // Optional safety limits (defaults keep ordinary mail working)
 use Erseco\ParserOptions;
 
