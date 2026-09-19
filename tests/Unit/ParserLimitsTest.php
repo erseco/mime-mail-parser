@@ -197,3 +197,45 @@ it(
         }
     }
 );
+
+
+it(
+    'rejects invalid parser options',
+    function () {
+        expect(fn () => new ParserOptions(maxMessageBytes: 0))
+            ->toThrow(\InvalidArgumentException::class, 'maxMessageBytes must be greater than zero.')
+            ->and(fn () => new ParserOptions(maxParts: 0))
+            ->toThrow(\InvalidArgumentException::class, 'maxParts must be greater than zero.')
+            ->and(fn () => new ParserOptions(maxDepth: -1))
+            ->toThrow(\InvalidArgumentException::class, 'maxDepth must be zero or greater.')
+            ->and(fn () => new ParserOptions(maxHeaders: 0))
+            ->toThrow(\InvalidArgumentException::class, 'maxHeaders must be greater than zero.')
+            ->and(fn () => new ParserOptions(maxHeaderLineLength: 0))
+            ->toThrow(\InvalidArgumentException::class, 'maxHeaderLineLength must be greater than zero.')
+            ->and(fn () => new ParserOptions(maxDecodedPartBytes: 0))
+            ->toThrow(\InvalidArgumentException::class, 'maxDecodedPartBytes must be greater than zero.');
+    }
+);
+
+it(
+    'stops reading a file after the configured message limit',
+    function () {
+        $path = tempnam(sys_get_temp_dir(), 'mime-mail-parser-');
+
+        if ($path === false) {
+            throw new \RuntimeException('Unable to create temporary file.');
+        }
+
+        try {
+            file_put_contents($path, str_repeat('A', 64));
+
+            Message::fromFile(
+                $path,
+                false,
+                new ParserOptions(maxMessageBytes: 32)
+            );
+        } finally {
+            @unlink($path);
+        }
+    }
+)->throws(ParserLimitExceededException::class);
