@@ -120,22 +120,33 @@ class Message implements \JsonSerializable
         }
 
         $options = $options ?? ParserOptions::defaults();
-        $fileSize = filesize($path);
+        $handle = fopen($path, 'rb');
 
-        if ($fileSize !== false) {
-            if ($fileSize > $options->maxMessageBytes) {
-                throw new ParserLimitExceededException(
-                    'maxMessageBytes',
-                    $options->maxMessageBytes,
-                    $fileSize
-                );
-            }
+        if ($handle === false) {
+            throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
         }
 
-        $message = file_get_contents($path);
+        try {
+            $readLimit = $options->maxMessageBytes < PHP_INT_MAX
+                ? $options->maxMessageBytes + 1
+                : $options->maxMessageBytes;
+            $message = stream_get_contents($handle, $readLimit);
+        } finally {
+            fclose($handle);
+        }
 
         if ($message === false) {
             throw new \RuntimeException(sprintf('Unable to read email message from "%s".', $path));
+        }
+
+        $messageSize = strlen($message);
+
+        if ($messageSize > $options->maxMessageBytes) {
+            throw new ParserLimitExceededException(
+                'maxMessageBytes',
+                $options->maxMessageBytes,
+                $messageSize
+            );
         }
 
         return new self($message, $ignoreSignature, $options);
