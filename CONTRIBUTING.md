@@ -50,13 +50,17 @@ composer bench
 
 Benchmarks are intentionally informational rather than a CI gate because shared runners are too variable for stable performance thresholds.
 
-
 ## Release process
 
-For v1.1.0:
+Releases are created manually from the GitHub Releases interface.
 
-1. Merge the stacked pull requests in dependency order.
-2. Confirm the `main` workflow is green, including the 90% coverage gate.
-3. Replace `Unreleased` in `CHANGELOG.md` with the release date.
-4. Create and push the annotated `v1.1.0` tag from the resulting `main` commit.
-5. Let the release workflow build the archive and create the GitHub release.
+For v1.1.1 and later:
+
+1. Confirm the `main` workflow is green, including the 90% coverage gate.
+2. Update `CHANGELOG.md` with the release version and date.
+3. Open **Releases → Draft a new release** on GitHub.
+4. Choose **Create new tag on publish**, enter the version tag (for example `v1.1.1`), and target `main`.
+5. Write or generate the release notes and publish the Release.
+6. The `Release assets` workflow will run from the published Release event, check out that tag, build the package ZIP, and upload it to the existing Release.
+
+The workflow must not create the Release or the tag itself.

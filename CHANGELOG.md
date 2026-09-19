@@ -4,7 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## [1.1.0] - Unreleased
+## [1.1.1] - Unreleased
+
+### Fixed
+
+- Release automation now uploads the package archive to an existing manually published GitHub Release instead of trying to create a duplicate Release.
+
+## [1.1.0] - 2026-09-19
 
 ### Added
 
