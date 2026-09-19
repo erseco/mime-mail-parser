@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Erseco\MimeMailParser\Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
-use Erseco\MimeMailParser;
 
 /**
  * Abstract base test case class

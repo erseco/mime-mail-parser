@@ -16,6 +16,8 @@ namespace Tests\Unit;
 
 use Erseco\Message;
 use Erseco\MessagePart;
+use Erseco\MimeMailParser\Message as NamespacedMessage;
+use Erseco\MimeMailParser\MessagePart as NamespacedMessagePart;
 
 it(
     'loads the message class through composer autoload',
@@ -206,6 +208,20 @@ it(
         expect($message->getHeaders())->toBe([])
             ->and($message->getParts())->toHaveCount(1)
             ->and($message->getTextPart()?->getContent())->toBe('');
+    }
+);
+
+
+it(
+    'supports both canonical and legacy class names',
+    function () {
+        $canonical = NamespacedMessage::fromString("Subject: Canonical\r\n\r\nBody");
+        $legacy = Message::fromString("Subject: Legacy\r\n\r\nBody");
+
+        expect($canonical)->toBeInstanceOf(NamespacedMessage::class)
+            ->and($legacy)->toBeInstanceOf(NamespacedMessage::class)
+            ->and(class_exists(NamespacedMessagePart::class))->toBeTrue()
+            ->and(class_exists(MessagePart::class))->toBeTrue();
     }
 );
 

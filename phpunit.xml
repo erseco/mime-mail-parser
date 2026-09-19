@@ -12,6 +12,8 @@
     <exclude>
       <!-- Backwards-compatible loader only; no executable logic. -->
       <file>./src/MimeMailParser.php</file>
+      <!-- Composer bootstrap compatibility aliases; loaded before coverage starts. -->
+      <file>./src/LegacyAliases.php</file>
     </exclude>
   </source>
 </phpunit>

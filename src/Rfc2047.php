@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Erseco;
+namespace Erseco\MimeMailParser;
 
 /**
  * Decode RFC 2047 encoded words without requiring mbstring or iconv.
