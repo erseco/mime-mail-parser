@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * RFC 2047 encoded-word decoder for MIME headers.
  *
