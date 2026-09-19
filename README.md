@@ -130,7 +130,8 @@ $message->getReplyToAddresses();
 $message->getParts();       // Returns array of MessagePart objects
 $message->getHtmlPart();    // Returns MessagePart with HTML content
 $message->getTextPart();    // Returns MessagePart with Text content
-$message->getAttachments(); // Returns array of attachment MessageParts
+$message->getAttachments();     // Returns array of attachment MessageParts
+$message->getAttachedMessages(); // Returns parsed message/rfc822 attachments
 
 // Working with message parts
 $parts = $message->getParts();
@@ -150,6 +151,8 @@ $firstPart->isHtml();                     // true if it's an HTML part
 
 $firstPart->isText();                     // true if it's a text part
 $firstPart->isAttachment();               // true if it's an attachment
+$firstPart->isMessage();                  // true for message/rfc822
+$firstPart->getMessage();                 // nested Message or null
 $firstPart->getFilename();                // name of the file if attachment
                                           // supports filename=, filename*=, and RFC 2231
                                           // continuations (filename*0*=, filename*1*=, …)

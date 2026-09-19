@@ -30,16 +30,23 @@ class MessagePart implements \JsonSerializable
     /** @var array<string, string> */
     protected array $headers;
 
+    protected ?ParserOptions $options;
+
     /**
      * Create a new MessagePart instance.
      *
      * @param string                $content The content of the message part.
      * @param array<string, string> $headers The headers associated with this part.
+     * @param ParserOptions|null    $options Optional parser limits for nested messages.
      */
-    public function __construct(string $content, array $headers = [])
-    {
+    public function __construct(
+        string $content,
+        array $headers = [],
+        ?ParserOptions $options = null
+    ) {
         $this->content = $content;
         $this->headers = $headers;
+        $this->options = $options;
     }
 
     /**
@@ -256,6 +263,37 @@ class MessagePart implements \JsonSerializable
     public function isImage(): bool
     {
         return str_starts_with($this->getMediaType(), 'image/');
+    }
+
+    /**
+     * Check if this part contains an attached RFC 822 message.
+     *
+     * @return bool
+     */
+    public function isMessage(): bool
+    {
+        return $this->getMediaType() === 'message/rfc822';
+    }
+
+    /**
+     * Parse an attached RFC 822 message.
+     *
+     * @param ParserOptions|null $options Optional parser limits. When omitted,
+     *                                    the parent message limits are reused.
+     *
+     * @return Message|null Parsed message or null for non-message parts.
+     */
+    public function getMessage(?ParserOptions $options = null): ?Message
+    {
+        if (!$this->isMessage()) {
+            return null;
+        }
+
+        return Message::fromString(
+            $this->getContent(),
+            false,
+            $options ?? $this->options
+        );
     }
 
     /**

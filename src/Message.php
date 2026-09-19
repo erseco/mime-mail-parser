@@ -554,6 +554,26 @@ class Message implements \JsonSerializable
     }
 
     /**
+     * Get attached RFC 822 messages.
+     *
+     * @return list<Message>
+     */
+    public function getAttachedMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->parts as $part) {
+            $message = $part->getMessage($this->options);
+
+            if ($message !== null) {
+                $messages[] = $message;
+            }
+        }
+
+        return $messages;
+    }
+
+    /**
      * Get the raw message size.
      *
      * @return int Size in bytes.
@@ -693,7 +713,7 @@ class Message implements \JsonSerializable
             $this->context->partCount
         );
 
-        $part = new MessagePart($body, $headers);
+        $part = new MessagePart($body, $headers, $this->options);
         $decodedSize = strlen($part->getContent());
         $this->assertWithinLimit(
             'maxDecodedPartBytes',
