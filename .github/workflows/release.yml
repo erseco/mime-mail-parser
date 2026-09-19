@@ -30,12 +30,11 @@ jobs:
       - name: Create package
         run: composer archive --format=zip --file="mime-mail-parser-${{ steps.tag.outputs.tag }}"
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v3
-        with:
-          files: mime-mail-parser-${{ steps.tag.outputs.tag }}.zip
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+      - name: Create release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            "mime-mail-parser-${{ steps.tag.outputs.tag }}.zip" \
+            --generate-notes \
+            --title "${{ steps.tag.outputs.tag }}"
