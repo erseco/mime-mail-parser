@@ -139,6 +139,10 @@ $firstPart = $parts[0];
 $firstPart->getHeaders();                 // array of all headers for this part
 $firstPart->getHeader('Content-Type');    // get specific header
 $firstPart->getContentType();             // 'text/html; charset="utf-8"'
+$firstPart->getMediaType();                // 'text/html'
+$firstPart->getContentTypeParameters();    // ['charset' => 'utf-8']
+$firstPart->getDisposition();              // 'attachment', 'inline', or null
+$firstPart->getDispositionParameters();    // decoded RFC 2231 parameters
 $firstPart->getContent();                 // transfer-decoded content (no charset conversion)
 $firstPart->getContentAsUtf8();           // text/* parts converted to UTF-8 when possible
 $firstPart->getCharset();                 // charset from Content-Type, or null
