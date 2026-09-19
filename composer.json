@@ -28,7 +28,8 @@
         "test-coverage": "mkdir -p coverage && vendor/bin/pest --coverage --min=90 --coverage-clover=coverage/clover.xml",
         "lint": "phpcs --standard=phpcs.xml.dist --warning-severity=0",
         "fix": "phpcbf --standard=phpcs.xml.dist --warning-severity=0",
-        "analyse": "phpstan analyse --memory-limit=512M"
+        "analyse": "phpstan analyse --memory-limit=512M",
+        "bench": "php bench/benchmark.php"
     },
     "autoload": {
         "psr-4": {

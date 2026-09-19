@@ -11,4 +11,4 @@
 composer.lock           export-ignore
 phpunit.xml             export-ignore
 README.md               export-ignore
-test.php                export-ignore
+test.php                export-ignore/bench                   export-ignore
