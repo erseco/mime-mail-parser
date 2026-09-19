@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Erseco;
+namespace Erseco\MimeMailParser;
 
 /**
  * Tracks counters that must be shared across nested Message parsers.

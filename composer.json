@@ -32,8 +32,11 @@
     },
     "autoload": {
         "psr-4": {
-            "Erseco\\": "src/"
-        }
+            "Erseco\\MimeMailParser\\": "src/"
+        },
+        "files": [
+            "src/LegacyAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

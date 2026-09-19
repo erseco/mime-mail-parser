@@ -52,6 +52,18 @@ To install the package via composer, Run:
 composer require erseco/mime-mail-parser
 ```
 
+### Namespace
+
+The canonical API uses the package namespace:
+
+```php
+use Erseco\MimeMailParser\Message;
+use Erseco\MimeMailParser\MessagePart;
+use Erseco\MimeMailParser\ParserOptions;
+```
+
+Legacy class names such as `Erseco\Message` and `Erseco\MessagePart` remain available as compatibility aliases. New code should use the canonical namespace so a future major release can remove those aliases cleanly.
+
 ### Usage
 
 ```php

@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Erseco;
+namespace Erseco\MimeMailParser;
 
 /**
  * MessagePart class for handling individual parts of an email message.

@@ -12,7 +12,7 @@
 
 declare(strict_types=1);
 
-namespace Erseco;
+namespace Erseco\MimeMailParser;
 
 /**
  * Identifies which parser limit was exceeded and the observed value.
