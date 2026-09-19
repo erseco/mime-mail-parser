@@ -14,6 +14,9 @@
 <a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/v/erseco/mime-mail-parser.svg?style=flat-square" alt="Packagist"></a>
 <a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/dm/erseco/mime-mail-parser.svg?style=flat-square" alt="Packagist"></a>
 <a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/php-v/erseco/mime-mail-parser.svg?style=flat-square" alt="PHP from Packagist"></a>
+<a href="https://github.com/erseco/mime-mail-parser/actions/workflows/tests.yml"><img src="https://github.com/erseco/mime-mail-parser/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
+<a href="https://codecov.io/gh/erseco/mime-mail-parser"><img src="https://codecov.io/gh/erseco/mime-mail-parser/branch/main/graph/badge.svg" alt="Codecov"></a>
+<a href="https://packagist.org/packages/erseco/mime-mail-parser"><img src="https://img.shields.io/packagist/l/erseco/mime-mail-parser.svg?style=flat-square" alt="License"></a>
 </p>
 
 ## Features
