@@ -11,4 +11,20 @@
 composer.lock           export-ignore
 phpunit.xml             export-ignore
 README.md               export-ignore
-test.php                export-ignore/bench                   export-ignore
+test.php                export-ignore
+/bench/                 export-ignore
+/CHANGELOG.md           export-ignore
+/CONTRIBUTING.md        export-ignore
+/SECURITY.md            export-ignore
+/codecov.yml            export-ignore
+/phpcs.xml.dist         export-ignore
+/phpstan.neon.dist      export-ignore
+/.aider*                export-ignore
+/.phpunit*              export-ignore
+/.idea/                 export-ignore
+/.DS_Store              export-ignore
+/coverage/              export-ignore
+/coverage.xml           export-ignore
+/clover.xml             export-ignore
+/*.cov                  export-ignore
+/tester.php             export-ignore

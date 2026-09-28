@@ -4,7 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## [1.1.1] - Unreleased
+## [1.1.2] - 2026-09-28
+
+### Fixed
+
+- Correct malformed export rules and exclude benchmarks, development configuration, and repository documentation from distribution archives. Runtime sources, Composer metadata, and the license remain included.
+
+## [1.1.1] - 2026-09-19
 
 ### Fixed
 
