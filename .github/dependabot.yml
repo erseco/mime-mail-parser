@@ -4,6 +4,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Append new majors to the supported range instead of replacing it:
+    # this library supports PHP ^8.2, so it must keep older dev-tool majors.
+    versioning-strategy: widen
 
   - package-ecosystem: "github-actions"
     directory: "/"
